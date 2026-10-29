@@ -596,6 +596,18 @@ class SettingsScreen(a: MainActivity) : BaseScreen(a) {
             a.safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + a.packageName)))
         })
 
+        right.addView(section("Música"))
+        right.addView(a.text("Control de los botones play, pausa, anterior y siguiente", 15f, p.muted).apply {
+            layoutParams = lp(MATCH, WRAP).apply { bottomMargin = a.dpi(2) }
+        })
+        right.addView(segment(listOf("Automático", "Sesión", "Teclas"), sp.getInt("mediaMode", 0)) { i ->
+            sp.edit().putInt("mediaMode", i).remove("mediaKeyPkgs").apply()
+            a.reloadScreen()
+        })
+        right.addView(a.text("Si los botones no responden con la música Bluetooth, elegí \"Teclas\".", 15f, p.muted).apply {
+            layoutParams = lp(MATCH, WRAP).apply { topMargin = a.dpi(8); bottomMargin = a.dpi(4) }
+        })
+
         right.addView(section("Destinos"))
         right.addView(row(R.drawable.ic_mappin, "Casa", sp.getString("destHome", null) ?: "Elegir", false) { a.editDestination("destHome", "Casa") })
         right.addView(row(R.drawable.ic_mappin, "Trabajo", sp.getString("destWork", null) ?: "Elegir", true) { a.editDestination("destWork", "Trabajo") })

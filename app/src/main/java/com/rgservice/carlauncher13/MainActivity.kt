@@ -1086,22 +1086,101 @@ class MainActivity : Activity() {
     private fun controller(): MediaController? = try {
         val msm = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
         val list = msm.getActiveSessions(ComponentName(this, MediaListener::class.java))
-        list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING } ?: list.firstOrNull()
+        list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+            ?: list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PAUSED }
+            ?: list.firstOrNull()
     } catch (e: SecurityException) { null }
 
-    private fun key(code: Int) {
-        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
-        am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
+    /* ---------------------------------------------------------------------------------------
+     *  Control de música
+     *  Algunas radios publican una sesión de música "vacía" (sin título ni estado, típico de la
+     *  app de Bluetooth) que ignora play/pausa/siguiente. En ese caso se usan las teclas
+     *  multimedia del sistema, igual que los botones del volante.
+     *  Ajustes › Música › Control: 0 = Automático, 1 = Sesión de música, 2 = Teclas multimedia
+     * --------------------------------------------------------------------------------------- */
+
+    private fun audio() = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private fun mediaMode() = sp.getInt("mediaMode", 0)
+    private fun keyPkgs(): Set<String> = sp.getStringSet("mediaKeyPkgs", emptySet()) ?: emptySet()
+    private fun rememberKeys(pkg: String) {
+        sp.edit().putStringSet("mediaKeyPkgs", keyPkgs() + pkg).apply()
     }
 
-    private fun prev() { controller()?.transportControls?.skipToPrevious() ?: key(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }
-    private fun next() { controller()?.transportControls?.skipToNext() ?: key(KeyEvent.KEYCODE_MEDIA_NEXT) }
+    private fun titleOf(c: MediaController): String? =
+        c.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
+
+    /** true si la sesión informa bien lo que pasa y vale la pena mandarle órdenes. */
+    private fun sessionWorks(c: MediaController): Boolean {
+        when (mediaMode()) { 1 -> return true; 2 -> return false }
+        if (c.packageName in keyPkgs()) return false
+        val st = c.playbackState?.state ?: return false
+        if (st == PlaybackState.STATE_NONE || st == PlaybackState.STATE_ERROR) return false
+        if (titleOf(c) == null) return false
+        // Suena música pero la sesión dice que no está reproduciendo: no es la que manda
+        if (audio().isMusicActive && st != PlaybackState.STATE_PLAYING && st != PlaybackState.STATE_BUFFERING) return false
+        return true
+    }
+
+    private fun key(code: Int) {
+        val am = audio()
+        val t = SystemClock.uptimeMillis()
+        am.dispatchMediaKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0))
+        am.dispatchMediaKeyEvent(KeyEvent(t, t, KeyEvent.ACTION_UP, code, 0))
+    }
+
+    private fun refreshMediaSoon() {
+        h.postDelayed({ try { updateMedia() } catch (e: Exception) { } }, 350)
+        h.postDelayed({ try { updateMedia() } catch (e: Exception) { } }, 1200)
+    }
+
+    private fun prev() = skip(false)
+    private fun next() = skip(true)
+
+    private fun skip(forward: Boolean) {
+        val code = if (forward) KeyEvent.KEYCODE_MEDIA_NEXT else KeyEvent.KEYCODE_MEDIA_PREVIOUS
+        val c = controller()
+        if (c == null || !sessionWorks(c)) { key(code); refreshMediaSoon(); return }
+        val before = titleOf(c)
+        if (forward) c.transportControls.skipToNext() else c.transportControls.skipToPrevious()
+        refreshMediaSoon()
+        // Si en 1,5 s no cambió el tema, la sesión no obedece: se usa la tecla y se recuerda
+        if (mediaMode() == 0) h.postDelayed({
+            try {
+                val now = controller()
+                if (now != null && now.packageName == c.packageName && titleOf(now) == before) {
+                    rememberKeys(c.packageName); key(code); refreshMediaSoon()
+                }
+            } catch (e: Exception) { }
+        }, 1500)
+    }
+
     private fun playPause() {
         val c = controller()
-        if (c == null) { key(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE); return }
-        if (c.playbackState?.state == PlaybackState.STATE_PLAYING) c.transportControls.pause()
-        else c.transportControls.play()
+        if (c == null || !sessionWorks(c)) {
+            key(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+            playing = !playing; renderPlay()
+            refreshMediaSoon(); return
+        }
+        val wasPlaying = c.playbackState?.state == PlaybackState.STATE_PLAYING
+        if (wasPlaying) c.transportControls.pause() else c.transportControls.play()
+        playing = !wasPlaying; renderPlay()
+        refreshMediaSoon()
+        // Si en 1 s el estado no cambió, la sesión no obedece: se usa la tecla y se recuerda
+        if (mediaMode() == 0) h.postDelayed({
+            try {
+                val now = controller()
+                val isPlaying = now?.playbackState?.state == PlaybackState.STATE_PLAYING
+                if (now != null && now.packageName == c.packageName && isPlaying == wasPlaying) {
+                    rememberKeys(c.packageName); key(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE); refreshMediaSoon()
+                }
+            } catch (e: Exception) { }
+        }, 1000)
+    }
+
+    private fun renderPlay() {
+        eq.playing = playing
+        btnPlay.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
+        if (playing) Anim.ripple(playRing) else Anim.stopRipple(playRing)
     }
 
     private fun mmss(ms: Long): String {
@@ -1131,19 +1210,19 @@ class MainActivity : Activity() {
             if (page == 0) tvSource.text = "Música"
             tvTrack.text = if (perm) "Sin reproducción" else "Sin permiso de música"
             tvArtist.text = if (perm) "Poné música en el celular o en la radio" else ""
-            playing = false
+            playing = audio().isMusicActive
             pbMusic.fraction = 0f; tvPos.text = ""; tvDur.text = ""
         } else {
             if (page == 0) tvSource.text = appLabel(c.packageName)
             val md = c.metadata
-            val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Reproduciendo"
+            val title = titleOf(c) ?: (if (audio().isMusicActive) "Reproduciendo" else "Música")
             if (tvTrack.text.toString() != title) tvTrack.text = title
             tvArtist.text = md?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: md?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
             art = md?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
                 ?: md?.getBitmap(MediaMetadata.METADATA_KEY_ART)
                 ?: md?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
             val ps = c.playbackState
-            playing = ps?.state == PlaybackState.STATE_PLAYING
+            playing = if (sessionWorks(c)) ps?.state == PlaybackState.STATE_PLAYING else audio().isMusicActive
             val dur = md?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
             if (ps != null && dur > 0) {
                 var pos = ps.position
@@ -1160,9 +1239,7 @@ class MainActivity : Activity() {
         } else if (!artIsFallback) {
             ivArt.setImageDrawable(fallbackArt()); lastArt = null; artIsFallback = true
         }
-        eq.playing = playing
-        btnPlay.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
-        if (playing) Anim.ripple(playRing) else Anim.stopRipple(playRing)
+        renderPlay()
     }
 
     /* =========================================================================================
