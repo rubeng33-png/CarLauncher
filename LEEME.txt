@@ -1,0 +1,69 @@
+CAR LAUNCHER 2.2
+===========================
+
+CÓMO COMPILAR
+- Abrí la carpeta CarLauncher13 en Android Studio y tocá Run (o Build > Build APK).
+- No usa librerías externas: solo Android y Kotlin, igual que la versión anterior.
+
+PRIMER USO EN LA RADIO
+1. Instalá el APK y tocá Inicio: elegí "Car Launcher" y "Siempre".
+   (Si la radio no pregunta: Ajustes > Apps > Apps predeterminadas > App de inicio.)
+2. Aceptá el permiso de ubicación (velocímetro, viaje, km de mantenimiento, clima y modo noche por sol).
+3. En Ajustes del launcher > Permisos > "Música y navegación": activá Car Launcher en
+   "Acceso a notificaciones". Sirve para controlar la música y mostrar el próximo giro de Maps/Waze.
+4. Si activás "Abrir al dar contacto", Android puede pedir "Mostrar sobre otras apps": activalo.
+
+QUÉ HAY DE NUEVO (2.2)
+- Barra de abajo: íconos y textos centrados.
+- Ajustes › Pantalla › Tamaño de pantalla: Normal, Grande y Muy grande (para pantallas de 7").
+- Tarjeta derecha con 3 páginas (deslizá o tocá los puntitos): Música, Mapa y Accesos.
+  · Mapa: tu posición por GPS sobre el mapa (las calles se guardan la primera vez que hay
+    internet y después se ven sin conexión). Botones Casa / Trabajo abren Google Maps ya
+    navegando. Mantené presionado Casa o Trabajo para cambiar el destino.
+  · Accesos: hasta 6 apps favoritas grandes ("+" para agregar, mantener para cambiar).
+- Música: si falta el permiso aparece "Activar control de música". Con el permiso,
+  anterior / siguiente funcionan con la música Bluetooth y Spotify.
+- Mantenimiento por km del tablero: cargás una vez lo que marca el tablero y en cada ítem
+  elegís "Lo cambié hoy", "Etiqueta del taller" (próximo cambio a los … km) o "Lo cambié
+  a los … km". Opcional: aviso por tiempo (3, 6 o 12 meses). "Km del tablero" corrige todo.
+- Clima sin internet: muestra el último descargado y hace cuánto.
+
+INTERNET EN LA RADIO SIN COMPARTIR A MANO
+- Android (Samsung): Rutinas › "Si se conecta al Bluetooth del auto" → "Activar Zona Wi-Fi".
+  Otras marcas: "Modos" / app de automatización con la misma idea.
+- iPhone: dejá "Compartir Internet" activado; la radio se reconecta sola a esa red.
+- Internet por Bluetooth: solo si la radio lo soporta (Ajustes de Android › Bluetooth ›
+  tu celular › "Acceso a Internet").
+- Google Maps sin internet: en Maps › tu perfil › Mapas sin conexión › descargá tu zona.
+
+QUÉ HAY DE NUEVO (2.1)
+- Auto holográfico (sedán compacto) animado en el inicio, en tema oscuro.
+- Bienvenida: el holograma se arma con un escaneo, saludo tipeado y chequeo rápido
+  (aceite, neumáticos y documentos con datos reales).
+- Mantenimiento: visor holográfico. Al elegir un ítem la cámara va a esa pieza y la resalta:
+  aceite de motor (motor + flujo de aceite), aceite de caja, filtro de aire, neumáticos
+  (rueda girando y perfil), frenos y correa. Botones: Cambio hecho, Intervalo, Ajustar km.
+- Los videos están en app/src/main/res/raw (unos 17 MB). Se reproducen sin sonido.
+- En tema claro el inicio usa el modelo 3D fijo; con foto propia se muestra tu foto.
+
+QUÉ HAY DE NUEVO (2.0)
+- Inicio: auto 3D animado, velocímetro GPS con aviso de límite, datos del viaje (km, tiempo, promedio),
+  clima, medidores de aceite de motor y de caja, música con carátula, progreso y nombre de la app.
+- Navegación: mientras Maps/Waze navega, la tarjeta del auto muestra el próximo giro, la calle,
+  la llegada, el tiempo y la distancia restantes. Tocala para volver al mapa.
+- Bienvenida: animación de 2 segundos al encender (se puede desactivar en Ajustes).
+- Mantenimiento: aceites, filtro de aire, neumáticos, frenos, correa + los que agregues;
+  vencimientos por fecha (seguro, habilitación, revisión técnica, licencia + los que agregues).
+- Apps: buscador, todas las apps con su ícono, mantener presionada para fijarla en la barra.
+- Ajustes: nombre, imagen del auto (modelo 3D o tu foto), modo noche (automático por sol,
+  con las luces del auto o manual), abrir al dar contacto, límite de velocidad, apps predeterminadas.
+
+SE CONSERVA DE LA VERSIÓN ANTERIOR
+- Los km restantes e intervalos de aceite de motor y de caja, tu nombre, la foto del auto,
+  las apps elegidas para Mapas/Música/Radio y la señal de luces detectada.
+
+PANTALLAS DE CUALQUIER TAMAÑO
+- El diseño está hecho a 1280x720 y se escala solo para llenar la pantalla de la radio
+  (1024x600, 1280x720, 1920x720, etc.).
+
+Fuente: Barlow (licencia SIL OFL, ver FUENTE_BARLOW_LICENCIA.txt).

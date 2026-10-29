@@ -1,0 +1,1049 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="28dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- ===================== Columna 1: vehículo / navegación ===================== -->
+        <FrameLayout
+            android:id="@+id/cardCar"
+            android:layout_width="0dp"
+            android:layout_weight="372"
+            android:layout_height="match_parent"
+            android:background="@drawable/card"
+            android:padding="28dp">
+
+            <LinearLayout
+                android:id="@+id/driveBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvHello"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/barlow_bold"
+                    android:singleLine="true"
+                    android:textColor="?attr/cText"
+                    android:textSize="30dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvGreet"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="18dp" />
+
+                    <LinearLayout
+                        android:id="@+id/gpsPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:background="@drawable/pill"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp">
+
+                        <FrameLayout
+                            android:layout_width="8dp"
+                            android:layout_height="8dp">
+
+                            <View
+                                android:id="@+id/gpsRipple"
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/dot_accent" />
+
+                            <View
+                                android:id="@+id/gpsDot"
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/dot_accent" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/tvGps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="@font/barlow_medium"
+                            android:text="GPS"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="15dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <FrameLayout
+                    android:id="@+id/carBox"
+                    android:layout_width="316dp"
+                    android:layout_height="178dp"
+                    android:layout_gravity="center_horizontal">
+
+                    <!-- Holograma animado (tema oscuro). En tema claro o con foto propia se usa la imagen. -->
+                    <com.rgservice.carlauncher13.HoloVideoView
+                        android:id="@+id/holoHome"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <View
+                        android:id="@+id/carGlow"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_gravity="bottom"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="-12dp" />
+
+                    <FrameLayout
+                        android:id="@+id/carFloat"
+                        android:layout_width="290dp"
+                        android:layout_height="141dp"
+                        android:layout_gravity="center">
+
+                        <com.rgservice.carlauncher13.SheenImageView
+                            android:id="@+id/ivCar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="Tu auto"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/auto3d" />
+
+                        <View
+                            android:id="@+id/flare1"
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="218dp"
+                            android:layout_marginTop="75dp" />
+
+                        <View
+                            android:id="@+id/flare2"
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="256dp"
+                            android:layout_marginTop="63dp" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <com.rgservice.carlauncher13.RoadView
+                    android:id="@+id/road"
+                    android:layout_width="290dp"
+                    android:layout_height="4dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/speedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:baselineAligned="true"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSpeed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/barlow_medium"
+                            android:fontFeatureSettings="tnum"
+                            android:includeFontPadding="false"
+                            android:text="0"
+                            android:textColor="?attr/cText"
+                            android:textSize="84dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="km/h"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="20dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvLimit"
+                        android:layout_width="58dp"
+                        android:layout_height="58dp"
+                        android:fontFamily="@font/barlow_bold"
+                        android:fontFeatureSettings="tnum"
+                        android:gravity="center"
+                        android:textSize="21dp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="?attr/cLine" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvTripKm"
+                            style="@style/StatValue" />
+
+                        <TextView
+                            style="@style/StatLabel"
+                            android:text="Viaje" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvTripTime"
+                            style="@style/StatValue" />
+
+                        <TextView
+                            style="@style/StatLabel"
+                            android:text="Tiempo" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvTripAvg"
+                            style="@style/StatValue" />
+
+                        <TextView
+                            style="@style/StatLabel"
+                            android:text="Promedio" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Estado "navegando": datos leídos de la notificación de Maps / Waze -->
+            <LinearLayout
+                android:id="@+id/navBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="34dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_nav"
+                        android:tint="?attr/cMuted" />
+
+                    <TextView
+                        android:id="@+id/tvNavApp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="17dp" />
+
+                    <LinearLayout
+                        android:id="@+id/navSpeedPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="34dp"
+                        android:background="@drawable/pill"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp">
+
+                        <TextView
+                            android:id="@+id/tvNavSpeed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/barlow_bold"
+                            android:fontFeatureSettings="tnum"
+                            android:textColor="?attr/cText"
+                            android:textSize="20dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="km/h"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="15dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        android:background="@drawable/turn_bg">
+
+                        <ImageView
+                            android:id="@+id/ivTurn"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_gravity="center"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_turn"
+                            android:tint="?attr/cAccent" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="18dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvNavDist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/barlow_semibold"
+                            android:fontFeatureSettings="tnum"
+                            android:includeFontPadding="false"
+                            android:singleLine="true"
+                            android:textColor="?attr/cText"
+                            android:textSize="54dp" />
+
+                        <TextView
+                            android:id="@+id/tvNavManeuver"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="21dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvNavStreet"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/barlow_semibold"
+                    android:maxLines="2"
+                    android:textColor="?attr/cText"
+                    android:textSize="25dp" />
+
+                <LinearLayout
+                    android:id="@+id/navNextRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_up"
+                        android:tint="?attr/cMuted" />
+
+                    <TextView
+                        android:id="@+id/tvNavNext"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="17dp" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <com.rgservice.carlauncher13.ProgressLine
+                    android:id="@+id/navRoute"
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp" />
+
+                <LinearLayout
+                    android:id="@+id/navStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/btnBackToMap"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/btn_outline"
+                    android:fontFamily="@font/barlow_semibold"
+                    android:gravity="center"
+                    android:text="Volver al mapa"
+                    android:textColor="?attr/cAccent"
+                    android:textSize="19dp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- ===================== Columna 2: hora + clima + mantenimiento ===================== -->
+        <LinearLayout
+            android:id="@+id/col2"
+            android:layout_width="0dp"
+            android:layout_weight="452"
+            android:layout_height="match_parent"
+            android:layout_marginStart="20dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/clockBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextClock
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/barlow_medium"
+                        android:fontFeatureSettings="tnum"
+                        android:format12Hour="HH"
+                        android:format24Hour="HH"
+                        android:includeFontPadding="false"
+                        android:textColor="?attr/cText"
+                        android:textSize="88dp" />
+
+                    <TextView
+                        android:id="@+id/tvColon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/barlow_medium"
+                        android:includeFontPadding="false"
+                        android:paddingStart="3dp"
+                        android:paddingEnd="3dp"
+                        android:text=":"
+                        android:textColor="?attr/cText"
+                        android:textSize="88dp"
+                        android:translationY="-6dp" />
+
+                    <TextClock
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/barlow_medium"
+                        android:fontFeatureSettings="tnum"
+                        android:format12Hour="mm"
+                        android:format24Hour="mm"
+                        android:includeFontPadding="false"
+                        android:textColor="?attr/cText"
+                        android:textSize="88dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="?attr/cMuted"
+                    android:textSize="21dp" />
+
+                <TextView
+                    android:id="@+id/tvWxInline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="?attr/cMuted"
+                    android:textSize="19dp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardWeather"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/card22"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <ImageView
+                    android:id="@+id/ivWx"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:src="@drawable/ic_cloud_sun"
+                    android:tint="?attr/cAccent" />
+
+                <TextView
+                    android:id="@+id/tvTemp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:fontFamily="@font/barlow_medium"
+                    android:includeFontPadding="false"
+                    android:text="--°"
+                    android:textColor="?attr/cText"
+                    android:textSize="40dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:text="Cargando clima…"
+                        android:textColor="?attr/cText"
+                        android:textSize="17dp" />
+
+                    <TextView
+                        android:id="@+id/tvRange"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFeatureSettings="tnum"
+                        android:singleLine="true"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="15dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvHum"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFeatureSettings="tnum"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="15dp" />
+
+                    <TextView
+                        android:id="@+id/tvWind"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFeatureSettings="tnum"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="15dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardMaint"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="16dp"
+                android:layout_weight="1"
+                android:background="@drawable/card"
+                android:orientation="vertical"
+                android:paddingStart="24dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="22dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Mantenimiento"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="17dp" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="44dp"
+                        android:fontFamily="@font/barlow_semibold"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"
+                        android:text="Ver todo"
+                        android:textColor="?attr/cAccent"
+                        android:textSize="17dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/gOil"
+                        style="@style/GaugeCol">
+
+                        <FrameLayout
+                            android:id="@+id/gOilRing"
+                            android:layout_width="160dp"
+                            android:layout_height="160dp">
+
+                            <com.rgservice.carlauncher13.GaugeView
+                                android:id="@+id/gvOil"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent" />
+
+                            <LinearLayout style="@style/GaugeCenter">
+
+                                <TextView
+                                    android:id="@+id/tvOilKm"
+                                    style="@style/GaugeNumber" />
+
+                                <TextView
+                                    android:id="@+id/tvOilUnit"
+                                    style="@style/GaugeUnit" />
+                            </LinearLayout>
+                        </FrameLayout>
+
+                        <TextView
+                            style="@style/GaugeName"
+                            android:text="Aceite motor" />
+
+                        <TextView
+                            android:id="@+id/tvOilSub"
+                            style="@style/GaugeSub" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="?attr/cLine" />
+
+                    <LinearLayout
+                        android:id="@+id/gGear"
+                        style="@style/GaugeCol">
+
+                        <FrameLayout
+                            android:id="@+id/gGearRing"
+                            android:layout_width="160dp"
+                            android:layout_height="160dp">
+
+                            <com.rgservice.carlauncher13.GaugeView
+                                android:id="@+id/gvGear"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent" />
+
+                            <LinearLayout style="@style/GaugeCenter">
+
+                                <TextView
+                                    android:id="@+id/tvGearKm"
+                                    style="@style/GaugeNumber" />
+
+                                <TextView
+                                    android:id="@+id/tvGearUnit"
+                                    style="@style/GaugeUnit" />
+                            </LinearLayout>
+                        </FrameLayout>
+
+                        <TextView
+                            style="@style/GaugeName"
+                            android:text="Aceite caja" />
+
+                        <TextView
+                            android:id="@+id/tvGearSub"
+                            style="@style/GaugeSub" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===================== Columna 3: tarjeta con páginas (música · mapa · accesos) ===================== -->
+        <LinearLayout
+            android:id="@+id/cardMedia"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="20dp"
+            android:layout_weight="400"
+            android:background="@drawable/card"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="22dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/ivPageIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_music"
+                    android:tint="?attr/cMuted" />
+
+                <TextView
+                    android:id="@+id/tvSource"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text="Música"
+                    android:textColor="?attr/cMuted"
+                    android:textSize="17dp" />
+
+                <!-- puntitos: tocalos o deslizá la tarjeta para cambiar de página -->
+                <LinearLayout
+                    android:id="@+id/pageDots"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal" />
+            </LinearLayout>
+
+            <com.rgservice.carlauncher13.SwipeFrame
+                android:id="@+id/pages"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1">
+
+                <!-- Página 1: música -->
+                <LinearLayout
+                    android:id="@+id/pageMusic"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <FrameLayout
+                        android:id="@+id/artBox"
+                        android:layout_width="180dp"
+                        android:layout_height="180dp">
+
+                        <ImageView
+                            android:id="@+id/ivArt"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="Carátula del álbum"
+                            android:scaleType="centerCrop" />
+
+                        <FrameLayout
+                            android:id="@+id/eqChip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:layout_gravity="bottom|start"
+                            android:layout_margin="12dp"
+                            android:background="@drawable/eq_chip"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp">
+
+                            <com.rgservice.carlauncher13.EqualizerView
+                                android:id="@+id/eq"
+                                android:layout_width="28dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center" />
+                        </FrameLayout>
+                    </FrameLayout>
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvTrack"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="marquee"
+                        android:fontFamily="@font/barlow_bold"
+                        android:gravity="center"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:singleLine="true"
+                        android:textColor="?attr/cText"
+                        android:textSize="26dp" />
+
+                    <TextView
+                        android:id="@+id/tvArtist"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:textColor="?attr/cMuted"
+                        android:textSize="19dp" />
+
+                    <!-- Aviso cuando falta el permiso: sin él no se puede cambiar de tema -->
+                    <TextView
+                        android:id="@+id/btnMusicPerm"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/btn_accent_pill"
+                        android:fontFamily="@font/barlow_semibold"
+                        android:gravity="center"
+                        android:paddingStart="22dp"
+                        android:paddingEnd="22dp"
+                        android:text="Activar control de música"
+                        android:textColor="?attr/cOnAccent"
+                        android:textSize="18dp"
+                        android:visibility="gone" />
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <com.rgservice.carlauncher13.ProgressLine
+                        android:id="@+id/pbMusic"
+                        android:layout_width="match_parent"
+                        android:layout_height="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvPos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFeatureSettings="tnum"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="15dp" />
+
+                        <TextView
+                            android:id="@+id/tvDur"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFeatureSettings="tnum"
+                            android:textColor="?attr/cMuted"
+                            android:textSize="15dp" />
+                    </LinearLayout>
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/btnPrev"
+                            android:layout_width="66dp"
+                            android:layout_height="66dp"
+                            android:background="@drawable/btn_circle"
+                            android:contentDescription="Anterior"
+                            android:padding="20dp"
+                            android:src="@drawable/ic_prev"
+                            android:tint="?attr/cText" />
+
+                        <FrameLayout
+                            android:layout_width="88dp"
+                            android:layout_height="88dp"
+                            android:layout_marginStart="18dp"
+                            android:layout_marginEnd="18dp">
+
+                            <View
+                                android:id="@+id/playRing"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/ring_accent" />
+
+                            <ImageView
+                                android:id="@+id/btnPlay"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/btn_accent"
+                                android:contentDescription="Reproducir o pausar"
+                                android:padding="27dp"
+                                android:src="@drawable/ic_play"
+                                android:tint="?attr/cOnAccent" />
+                        </FrameLayout>
+
+                        <ImageView
+                            android:id="@+id/btnNext"
+                            android:layout_width="66dp"
+                            android:layout_height="66dp"
+                            android:background="@drawable/btn_circle"
+                            android:contentDescription="Siguiente"
+                            android:padding="20dp"
+                            android:src="@drawable/ic_next"
+                            android:tint="?attr/cText" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Página 2: mapa -->
+                <FrameLayout
+                    android:id="@+id/pageMap"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:id="@+id/mapFrame"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/card22">
+
+                        <com.rgservice.carlauncher13.MapTileView
+                            android:id="@+id/mapView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="Mapa con tu posición" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/btnZoomIn"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/btn_circle"
+                            android:contentDescription="Acercar"
+                            android:gravity="center"
+                            android:text="+"
+                            android:textColor="?attr/cText"
+                            android:textSize="24dp" />
+
+                        <TextView
+                            android:id="@+id/btnZoomOut"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/btn_circle"
+                            android:contentDescription="Alejar"
+                            android:gravity="center"
+                            android:text="−"
+                            android:textColor="?attr/cText"
+                            android:textSize="24dp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/mapButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_gravity="bottom"
+                        android:layout_margin="10dp"
+                        android:orientation="horizontal" />
+                </FrameLayout>
+
+                <!-- Página 3: accesos -->
+                <LinearLayout
+                    android:id="@+id/pageApps"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone" />
+            </com.rgservice.carlauncher13.SwipeFrame>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ===================== Barra inferior (se arma desde el código) ===================== -->
+    <LinearLayout
+        android:id="@+id/dock"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/card"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp" />
+</LinearLayout>

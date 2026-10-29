@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bienvenida: video del holograma armándose + saludo tipeado + chequeo rápido.
+     Siempre oscura (el holograma luce sobre fondo oscuro), aunque el tema sea claro. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF0B0D10"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.rgservice.carlauncher13.HoloVideoView
+        android:id="@+id/splashVideo"
+        android:layout_width="1280dp"
+        android:layout_height="720dp"
+        android:layout_gravity="center" />
+
+    <LinearLayout
+        android:layout_width="560dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|start"
+        android:layout_marginStart="96dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/splashKicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/barlow_semibold"
+            android:letterSpacing="0.3"
+            android:text="BIENVENIDO"
+            android:textColor="#FF6FB1FF"
+            android:textSize="16dp" />
+
+        <TextView
+            android:id="@+id/splashHello"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/barlow_bold"
+            android:shadowColor="#996FB1FF"
+            android:shadowRadius="18"
+            android:singleLine="true"
+            android:textColor="#FFF3F5F7"
+            android:textSize="58dp" />
+
+        <TextView
+            android:id="@+id/splashSub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#FF9BA5B1"
+            android:textSize="22dp" />
+
+        <LinearLayout
+            android:id="@+id/splashChecks"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:orientation="vertical" />
+
+        <com.rgservice.carlauncher13.ProgressLine
+            android:id="@+id/splashBar"
+            android:layout_width="220dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="30dp" />
+    </LinearLayout>
+</FrameLayout>

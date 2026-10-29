@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="cGround" format="color"/>
+    <attr name="cCard" format="color"/>
+    <attr name="cCard2" format="color"/>
+    <attr name="cLine" format="color"/>
+    <attr name="cText" format="color"/>
+    <attr name="cMuted" format="color"/>
+    <attr name="cAccent" format="color"/>
+    <attr name="cOnAccent" format="color"/>
+    <attr name="cWarn" format="color"/>
+    <attr name="cTrack" format="color"/>
+    <attr name="cTick" format="color"/>
+    <attr name="cPill" format="color"/>
+    <attr name="cGlow" format="color"/>
+    <attr name="cSeg" format="color"/>
+    <attr name="cArt1" format="color"/>
+    <attr name="cArt2" format="color"/>
+    <attr name="cArt3" format="color"/>
+</resources>
