@@ -1046,8 +1046,15 @@ class MainActivity : Activity() {
         else safeStart(i)
     }
 
+    /**
+     * Las apps se abren en su propia tarea, como hace cualquier launcher. Sin esto Google Maps
+     * arrancaba dentro de la tarea del launcher: al pasar a la navegación el launcher volvía a
+     * quedar arriba y Maps se achicaba a la ventanita flotante.
+     */
+    private fun ownTask(i: Intent): Intent = i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
     fun safeStart(i: Intent) {
-        try { startActivity(i) } catch (e: Exception) { Toast.makeText(this, "No se pudo abrir", Toast.LENGTH_SHORT).show() }
+        try { startActivity(ownTask(i)) } catch (e: Exception) { Toast.makeText(this, "No se pudo abrir", Toast.LENGTH_SHORT).show() }
     }
 
     fun slotPkg(s: Slot): String? = sp.getString(s.key, s.def)
@@ -1067,7 +1074,7 @@ class MainActivity : Activity() {
         val pkg = slotPkg(s)
         if (pkg != null && packageManager.getLaunchIntentForPackage(pkg) != null) { launch(pkg); return }
         if (s.key == "pkgPhone") {
-            try { startActivity(Intent(Intent.ACTION_DIAL)); return } catch (e: Exception) { }
+            try { startActivity(ownTask(Intent(Intent.ACTION_DIAL))); return } catch (e: Exception) { }
         }
         pickApp { p -> sp.edit().putString(s.key, p).apply(); launch(p) }
     }
@@ -1481,7 +1488,7 @@ class MainActivity : Activity() {
         val uri = Uri.parse("google.navigation:q=" + Uri.encode(dest))
         val i = Intent(Intent.ACTION_VIEW, uri)
         if (navPkg == "com.google.android.apps.maps" && packageManager.getLaunchIntentForPackage(navPkg) != null) i.setPackage(navPkg)
-        try { startActivity(i) } catch (e: Exception) {
+        try { startActivity(ownTask(i)) } catch (e: Exception) {
             safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(dest))))
         }
     }

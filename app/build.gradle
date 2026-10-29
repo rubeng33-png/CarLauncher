@@ -9,8 +9,8 @@ android {
         applicationId 'com.rgservice.carlauncher13'
         minSdk 26
         targetSdk 33
-        versionCode 7
-        versionName '2.3'
+        versionCode 8
+        versionName '2.4'
     }
     // Firma fija: GitHub Actions descifra signing/carlauncher-firma.p12.enc y pasa la ruta y la
     // contraseña por variables de entorno. Sin esas variables (Android Studio) se usa la firma debug.

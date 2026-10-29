@@ -1,4 +1,4 @@
-CAR LAUNCHER 2.3
+CAR LAUNCHER 2.4
 ===========================
 
 CÓMO COMPILAR
@@ -12,6 +12,10 @@ PRIMER USO EN LA RADIO
 3. En Ajustes del launcher > Permisos > "Música y navegación": activá Car Launcher en
    "Acceso a notificaciones". Sirve para controlar la música y mostrar el próximo giro de Maps/Waze.
 4. Si activás "Abrir al dar contacto", Android puede pedir "Mostrar sobre otras apps": activalo.
+
+QUÉ HAY DE NUEVO (2.4)
+- Casa, Trabajo, Buscar y las apps se abren a pantalla completa en su propia ventana.
+  Antes Google Maps podía quedar como ventanita flotante encima del launcher.
 
 QUÉ HAY DE NUEVO (2.3)
 - Música: play/pausa, anterior y siguiente ahora funcionan con la música Bluetooth de la radio.
