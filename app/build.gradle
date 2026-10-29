@@ -12,6 +12,24 @@ android {
         versionCode 7
         versionName '2.3'
     }
+    // Firma fija: GitHub Actions descifra signing/carlauncher-firma.p12.enc y pasa la ruta y la
+    // contraseña por variables de entorno. Sin esas variables (Android Studio) se usa la firma debug.
+    signingConfigs {
+        fija {
+            def ks = System.getenv('SIGNING_KEYSTORE')
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('SIGNING_PASSWORD')
+                keyAlias 'carlauncher'
+                keyPassword System.getenv('SIGNING_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            if (System.getenv('SIGNING_KEYSTORE')) signingConfig signingConfigs.fija
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

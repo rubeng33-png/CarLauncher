@@ -21,8 +21,38 @@ jobs:
           gradle-version: '8.2'
           cache-provider: basic
 
+      # La clave está cifrada en signing/. El secreto SIGNING_PASSWORD la descifra.
+      - name: Preparar firma fija
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          if [ -z "$SIGNING_PASSWORD" ]; then
+            echo "::error::Falta el secreto SIGNING_PASSWORD (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          KS="$RUNNER_TEMP/carlauncher-firma.p12"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
+            -in signing/carlauncher-firma.p12.enc -out "$KS" -pass env:SIGNING_PASSWORD \
+            || { echo "::error::La contraseña SIGNING_PASSWORD no es correcta."; exit 1; }
+          echo "SIGNING_KEYSTORE=$KS" >> "$GITHUB_ENV"
+
       - name: Build debug APK
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Verificar firma
+        run: |
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          GOT=$("$SIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+          WANT=$(tr -d '[:space:]' < signing/sha256.txt)
+          echo "Firma del APK: $GOT"
+          [ "$GOT" = "$WANT" ] || { echo "::error::El APK no tiene la firma fija esperada."; exit 1; }
+
+      - name: Borrar clave descifrada
+        if: always()
+        run: rm -f "$RUNNER_TEMP/carlauncher-firma.p12"
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
