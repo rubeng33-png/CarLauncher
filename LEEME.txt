@@ -1,4 +1,4 @@
-CAR LAUNCHER 2.4
+CAR LAUNCHER 2.5
 ===========================
 
 CÓMO COMPILAR
@@ -12,6 +12,13 @@ PRIMER USO EN LA RADIO
 3. En Ajustes del launcher > Permisos > "Música y navegación": activá Car Launcher en
    "Acceso a notificaciones". Sirve para controlar la música y mostrar el próximo giro de Maps/Waze.
 4. Si activás "Abrir al dar contacto", Android puede pedir "Mostrar sobre otras apps": activalo.
+
+QUÉ HAY DE NUEVO (2.5)
+- Maps dentro de la tarjeta: Casa, Trabajo, Buscar y "volver al mapa" abren Google Maps como
+  ventana del tamaño y en el lugar de la tarjeta del mapa. El resto del launcher queda visible.
+  Requiere en la radio: Opciones de desarrollador › "Habilitar ventanas de forma libre"
+  (y si aparece "Forzar actividades redimensionables") y reiniciar.
+  Sin eso, Maps se abre a pantalla completa. Se activa o desactiva en Ajustes › Destinos.
 
 QUÉ HAY DE NUEVO (2.4)
 - Casa, Trabajo, Buscar y las apps se abren a pantalla completa en su propia ventana.

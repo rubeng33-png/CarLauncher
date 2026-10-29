@@ -3,6 +3,7 @@ package com.rgservice.carlauncher13
 import android.Manifest
 import android.animation.ValueAnimator
 import android.app.Activity
+import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
@@ -15,6 +16,7 @@ import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Outline
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.media.AudioManager
@@ -656,9 +658,84 @@ class MainActivity : Activity() {
     private fun backToMap() {
         val n = Live.nav
         try {
-            if (n?.intent != null) { n.intent.send(); return }
+            if (n?.intent != null) {
+                val opts = cardOptions()
+                if (opts != null) n.intent.send(this, 0, null, null, null, null, opts) else n.intent.send()
+                return
+            }
         } catch (e: Exception) { }
-        openSlot(SLOTS[0])
+        openMapApp()
+    }
+
+    /* ---------------------------------------------------------------------------------------
+     *  Maps dentro de la tarjeta
+     *  Android no deja meter otra app adentro de un launcher, pero sí abrirla como ventana
+     *  ("forma libre") con el tamaño y la posición exactos de la tarjeta del mapa. El launcher
+     *  sigue visible y usable alrededor. Necesita que la radio tenga activadas las ventanas de
+     *  forma libre (Opciones de desarrollador › "Habilitar ventanas de forma libre").
+     * --------------------------------------------------------------------------------------- */
+
+    fun mapInCard() = sp.getBoolean("mapInCard", true)
+
+    fun freeformSupported(): Boolean =
+        packageManager.hasSystemFeature(PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT) ||
+            Settings.Global.getInt(contentResolver, "enable_freeform_support", 0) != 0
+
+    /** Rectángulo de la tarjeta del mapa en coordenadas de pantalla (ya escalado). */
+    private fun mapCardRect(): Rect? {
+        val v = findViewById<View>(R.id.cardMedia) ?: return null
+        val r = Rect()
+        if (!v.isShown || !v.getGlobalVisibleRect(r) || r.width() < dpi(120)) return null
+        val win = IntArray(2)
+        window.decorView.getLocationOnScreen(win)
+        r.offset(win[0], win[1])
+        return r
+    }
+
+    private fun cardOptions(): Bundle? {
+        if (!mapInCard() || !freeformSupported()) return null
+        val r = mapCardRect() ?: return null
+        val o = ActivityOptions.makeBasic().setLaunchBounds(r)
+        try {
+            // WINDOWING_MODE_FREEFORM = 5 (API oculta, la usan los launchers con ventanas)
+            ActivityOptions::class.java.getMethod("setLaunchWindowingMode", Int::class.javaPrimitiveType).invoke(o, 5)
+        } catch (e: Throwable) { }
+        return o.toBundle()
+    }
+
+    /** Abre la app de mapas: en la tarjeta si se puede; si no, a pantalla completa. */
+    private fun startMap(i: Intent): Boolean {
+        if (mapInCard() && !freeformSupported()) askFreeform()
+        return try {
+            val opts = cardOptions()
+            if (opts != null) startActivity(ownTask(i), opts) else startActivity(ownTask(i))
+            true
+        } catch (e: Exception) { false }
+    }
+
+    private fun openMapApp() {
+        val pkg = slotPkg(SLOTS[0])
+        val i = pkg?.let { packageManager.getLaunchIntentForPackage(it) }
+        if (i == null || !startMap(i)) openSlot(SLOTS[0])
+    }
+
+    /** Se muestra una sola vez si la radio no tiene activadas las ventanas de forma libre. */
+    private fun askFreeform() {
+        if (sp.getBoolean("ffAsked", false)) return
+        sp.edit().putBoolean("ffAsked", true).apply()
+        AlertDialog.Builder(this)
+            .setTitle("Maps dentro de la tarjeta")
+            .setMessage("Para que Maps se abra en la tarjeta del mapa sin tapar el launcher, la radio " +
+                "tiene que permitir ventanas.\n\n" +
+                "1. Ajustes de Android › Opciones de desarrollador\n" +
+                "2. Activá \"Habilitar ventanas de forma libre\" (y si aparece, \"Forzar actividades redimensionables\")\n" +
+                "3. Reiniciá la radio\n\n" +
+                "Mientras tanto Maps se abre a pantalla completa. Podés desactivar esto en Ajustes › Destinos.")
+            .setPositiveButton("Abrir opciones") { _, _ ->
+                safeStart(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
     }
 
     /* =========================================================================================
@@ -1438,7 +1515,7 @@ class MainActivity : Activity() {
         }
         mapBtn("Casa", R.drawable.ic_mappin, { goTo("destHome", "Casa") }, { editDestination("destHome", "Casa") })
         mapBtn("Trabajo", R.drawable.ic_mappin, { goTo("destWork", "Trabajo") }, { editDestination("destWork", "Trabajo") })
-        mapBtn("Buscar", R.drawable.ic_search, { openSlot(SLOTS[0]) }, null)
+        mapBtn("Buscar", R.drawable.ic_search, { openMapApp() }, null)
 
         buildAppsPage()
         showPage(sp.getInt("page", 0).coerceIn(0, 2), false)
@@ -1488,9 +1565,7 @@ class MainActivity : Activity() {
         val uri = Uri.parse("google.navigation:q=" + Uri.encode(dest))
         val i = Intent(Intent.ACTION_VIEW, uri)
         if (navPkg == "com.google.android.apps.maps" && packageManager.getLaunchIntentForPackage(navPkg) != null) i.setPackage(navPkg)
-        try { startActivity(ownTask(i)) } catch (e: Exception) {
-            safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(dest))))
-        }
+        if (!startMap(i)) startMap(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(dest))))
     }
 
     /** Guarda Casa / Trabajo: dirección escrita o tu ubicación actual. */

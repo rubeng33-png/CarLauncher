@@ -609,6 +609,11 @@ class SettingsScreen(a: MainActivity) : BaseScreen(a) {
         })
 
         right.addView(section("Destinos"))
+        right.addView(toggleRow("Maps dentro de la tarjeta",
+            if (a.freeformSupported()) "Abre Maps en la tarjeta del mapa, sin tapar el launcher"
+            else "Requiere \"ventanas de forma libre\" en Opciones de desarrollador", "mapInCard", true) { on ->
+            if (on) a.sp.edit().remove("ffAsked").apply()
+        })
         right.addView(row(R.drawable.ic_mappin, "Casa", sp.getString("destHome", null) ?: "Elegir", false) { a.editDestination("destHome", "Casa") })
         right.addView(row(R.drawable.ic_mappin, "Trabajo", sp.getString("destWork", null) ?: "Elegir", true) { a.editDestination("destWork", "Trabajo") })
 
