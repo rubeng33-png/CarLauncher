@@ -383,15 +383,16 @@ private fun hasTransparency(img: ImageBitmap): Boolean = try {
         .any { (x, y) -> (b.getPixel(x, y) ushr 24) < 200 }
 } catch (e: Exception) { false }
 
-/** Máscara ovalada que desvanece los bordes de una foto con fondo, para que se funda con el panel. */
+/** Desvanece los cuatro bordes de una foto con fondo, para que se funda con el panel. */
 private fun DrawScope.edgeMask() {
-    val rx = size.width / 2f
-    scale(1f, size.height / size.width, pivot = center) {
-        drawCircle(
-            Brush.radialGradient(0f to Color.Black, 0.62f to Color.Black, 1f to Color.Transparent, center = center, radius = rx * 1.02f),
-            radius = rx * 1.02f, center = center, blendMode = BlendMode.DstIn,
-        )
-    }
+    drawRect(
+        Brush.horizontalGradient(0f to Color.Transparent, 0.16f to Color.Black, 0.84f to Color.Black, 1f to Color.Transparent),
+        blendMode = BlendMode.DstIn,
+    )
+    drawRect(
+        Brush.verticalGradient(0f to Color.Transparent, 0.18f to Color.Black, 0.80f to Color.Black, 1f to Color.Transparent),
+        blendMode = BlendMode.DstIn,
+    )
 }
 
 /** Óvalo con degradé radial (luz o sombra suave). */
