@@ -15,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -61,6 +62,7 @@ import com.rgservice.carlauncher.data.media.NavInfo
 import com.rgservice.carlauncher.ui.components.CarCard
 import com.rgservice.carlauncher.ui.components.LineIcon
 import com.rgservice.carlauncher.ui.components.Txt
+import com.rgservice.carlauncher.ui.components.cardBrush
 import com.rgservice.carlauncher.ui.theme.CarTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -114,9 +116,9 @@ fun RightCard(d: RightData, a: RightActions, small: Boolean, modifier: Modifier)
     val scope = rememberCoroutineScope()
     LaunchedEffect(pager.currentPage) { a.onPage(pager.currentPage) }
 
-    CarCard(modifier, padding = PaddingValues(start = 20.dp, end = 12.dp, top = 14.dp, bottom = 18.dp)) {
+    CarCard(modifier, radius = 26.dp, padding = PaddingValues(start = 18.dp, end = 10.dp, top = 8.dp, bottom = 14.dp), brush = cardBrush()) {
         Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().height(40.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().height(38.dp).padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 val p = pager.currentPage
                 LineIcon(ICONS[p], 20.dp, c.muted)
                 Txt(
@@ -134,7 +136,7 @@ fun RightCard(d: RightData, a: RightActions, small: Boolean, modifier: Modifier)
                 }
             }
             HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
-                Box(Modifier.fillMaxSize().padding(end = 8.dp, top = 6.dp)) {
+                Box(Modifier.fillMaxSize().padding(end = 8.dp, top = 4.dp)) {
                     when (page) {
                         0 -> MusicPage(d.media, small, a)
                         1 -> MapPage(d, a)
@@ -160,39 +162,59 @@ private fun MusicPage(m: Media, small: Boolean, a: RightActions) {
             delay(500)
         }
     }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        if (maxHeight < 330.dp) MusicCompact(m, pos, maxHeight, a) else MusicTall(m, pos, small, a)
+    }
+}
+
+/** Reproductor horizontal (tarjeta baja): carátula a la izquierda, tema y botones a la derecha. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun MusicCompact(m: Media, pos: Long, h: Dp, a: RightActions) {
+    val c = CarTheme.colors
+    val art = (h * 0.5f).coerceIn(84.dp, 136.dp)
+    val play = (h * 0.27f).coerceIn(56.dp, 72.dp)
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ArtBox(m, art, a)
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Txt(m.title, 21, weight = FontWeight.Bold, maxLines = 2)
+                Txt(m.artist, 16, c.muted, modifier = Modifier.padding(top = 2.dp))
+                if (m.hasPermission && m.durationMs > 0) {
+                    Txt("${mmss(pos)} / ${mmss(m.durationMs)}", 14, c.muted, tabular = true, modifier = Modifier.padding(top = 4.dp))
+                }
+            }
+        }
+        if (!m.hasPermission) {
+            PermissionButton(a)
+        } else {
+            if (m.durationMs > 0) ProgressLine(pos, m.durationMs)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                RoundButton(R.drawable.ic_prev, play * 0.78f, filled = false, onClick = a.onPrevious)
+                Spacer(Modifier.width(18.dp))
+                RoundButton(if (m.playing) R.drawable.ic_pause else R.drawable.ic_play, play, filled = true, onClick = a.onPlayPause)
+                Spacer(Modifier.width(18.dp))
+                RoundButton(R.drawable.ic_next, play * 0.78f, filled = false, onClick = a.onNext)
+            }
+        }
+    }
+}
+
+/** Reproductor vertical (tarjeta alta): como antes. */
+@Composable
+private fun MusicTall(m: Media, pos: Long, small: Boolean, a: RightActions) {
+    val c = CarTheme.colors
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.weight(1f))
-        val art = if (small) 120.dp else 170.dp
-        Box(
-            Modifier.size(art).clip(RoundedCornerShape(24.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF3D7BD9), Color(0xFF101826))))
-                .combinedClickable(onClick = a.onOpenMusic, onLongClick = a.onMusicDiag),
-            contentAlignment = Alignment.BottomStart,
-        ) {
-            val bmp = m.art
-            if (bmp != null) {
-                val img = remember(bmp) { bmp.asImageBitmap() }
-                Image(img, contentDescription = "Carátula", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            } else {
-                LineIcon(R.drawable.ic_music, art * 0.32f, Color.White.copy(alpha = 0.35f), Modifier.align(Alignment.Center))
-            }
-            Equalizer(m.playing, Modifier.padding(12.dp))
-        }
+        ArtBox(m, if (small) 120.dp else 170.dp, a)
         Spacer(Modifier.weight(1f))
         Txt(m.title, 25, weight = FontWeight.Bold, align = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Txt(m.artist, 18, c.muted, align = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
         Spacer(Modifier.weight(1f))
         if (!m.hasPermission) {
-            Box(
-                Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp)).background(c.pill)
-                    .clickable(onClick = a.onMusicPermission),
-                contentAlignment = Alignment.Center,
-            ) { Txt("Permitir ver y controlar la música", 17, c.accent, FontWeight.SemiBold) }
+            PermissionButton(a)
         } else if (m.durationMs > 0) {
-            val frac = (pos.toFloat() / m.durationMs).coerceIn(0f, 1f)
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
-                Box(Modifier.fillMaxWidth(frac).fillMaxHeight().background(c.accent))
-            }
+            ProgressLine(pos, m.durationMs)
             Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Txt(mmss(pos), 15, c.muted, tabular = true, modifier = Modifier.weight(1f))
                 Txt(mmss(m.durationMs), 15, c.muted, tabular = true)
@@ -206,6 +228,46 @@ private fun MusicPage(m: Media, small: Boolean, a: RightActions) {
             RoundButton(if (m.playing) R.drawable.ic_pause else R.drawable.ic_play, if (small) 76.dp else 88.dp, filled = true, onClick = a.onPlayPause)
             RoundButton(R.drawable.ic_next, if (small) 58.dp else 66.dp, filled = false, onClick = a.onNext)
         }
+    }
+}
+
+/** Carátula: tocar abre la app que suena; mantener abre el diagnóstico. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ArtBox(m: Media, art: Dp, a: RightActions) {
+    Box(
+        Modifier.size(art).clip(RoundedCornerShape(art * 0.16f))
+            .background(Brush.linearGradient(listOf(Color(0xFF3D7BD9), Color(0xFF101826))))
+            .combinedClickable(onClick = a.onOpenMusic, onLongClick = a.onMusicDiag),
+        contentAlignment = Alignment.BottomStart,
+    ) {
+        val bmp = m.art
+        if (bmp != null) {
+            val img = remember(bmp) { bmp.asImageBitmap() }
+            Image(img, contentDescription = "Carátula", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        } else {
+            LineIcon(R.drawable.ic_music, art * 0.32f, Color.White.copy(alpha = 0.35f), Modifier.align(Alignment.Center))
+        }
+        Equalizer(m.playing, Modifier.padding(art * 0.07f))
+    }
+}
+
+@Composable
+private fun PermissionButton(a: RightActions) {
+    val c = CarTheme.colors
+    Box(
+        Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp)).background(c.pill)
+            .clickable(onClick = a.onMusicPermission),
+        contentAlignment = Alignment.Center,
+    ) { Txt("Permitir ver y controlar la música", 17, c.accent, FontWeight.SemiBold) }
+}
+
+@Composable
+private fun ProgressLine(pos: Long, dur: Long) {
+    val c = CarTheme.colors
+    val frac = (pos.toFloat() / dur).coerceIn(0f, 1f)
+    Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+        Box(Modifier.fillMaxWidth(frac).fillMaxHeight().background(c.accent))
     }
 }
 
@@ -349,9 +411,11 @@ private fun MapChip(label: String, icon: Int, set: Boolean, modifier: Modifier, 
 private fun AppsPage(d: RightData, small: Boolean, a: RightActions) {
     val c = CarTheme.colors
     val cells: List<String?> = d.favs.take(6) + if (d.favs.size < 6) listOf(null) else emptyList()
-    val cols = if (small) 2 else 3
-    Box(Modifier.fillMaxSize()) {
+    val cols = 3
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val rows = cells.chunked(cols)
+        val iconSize = ((maxHeight - 40.dp) / rows.size.coerceAtLeast(1) - 34.dp).coerceIn(40.dp, 62.dp)
+        val showHint = maxHeight > 300.dp
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
             rows.forEach { row ->
                 Row(Modifier.fillMaxWidth()) {
@@ -362,17 +426,17 @@ private fun AppsPage(d: RightData, small: Boolean, a: RightActions) {
                                     onClick = { if (pkg != null) a.onFav(pkg) else a.onFavAdd() },
                                     onLongClick = pkg?.let { { a.onFavLong(it) } },
                                 )
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             if (pkg != null) {
                                 val icon = remember(pkg) { d.apps.icon(pkg) }
-                                if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.size(62.dp))
-                                else Box(Modifier.size(62.dp).clip(RoundedCornerShape(18.dp)).background(c.pill))
-                                Txt(remember(pkg) { d.apps.label(pkg) }, 16, align = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp, start = 4.dp, end = 4.dp))
+                                if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.size(iconSize))
+                                else Box(Modifier.size(iconSize).clip(RoundedCornerShape(18.dp)).background(c.pill))
+                                Txt(remember(pkg) { d.apps.label(pkg) }, 15, align = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, start = 4.dp, end = 4.dp))
                             } else {
-                                Box(Modifier.size(62.dp).clip(RoundedCornerShape(18.dp)).background(c.pill), contentAlignment = Alignment.Center) {
+                                Box(Modifier.size(iconSize).clip(RoundedCornerShape(18.dp)).background(c.pill), contentAlignment = Alignment.Center) {
                                     LineIcon(R.drawable.ic_plus, 28.dp, c.accent)
                                 }
                                 Txt("Agregar", 16, c.accent, align = TextAlign.Center,
@@ -383,7 +447,7 @@ private fun AppsPage(d: RightData, small: Boolean, a: RightActions) {
                     repeat(cols - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
-            Txt("Mantené apretada una app para cambiarla o quitarla", 14, c.muted, align = TextAlign.Center,
+            if (showHint) Txt("Mantené apretada una app para cambiarla o quitarla", 14, c.muted, align = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth())
         }
     }

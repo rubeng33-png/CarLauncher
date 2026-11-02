@@ -1,5 +1,14 @@
 package com.rgservice.carlauncher.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rgservice.carlauncher.data.Gauge
+import com.rgservice.carlauncher.ui.components.ArcGauge
+import com.rgservice.carlauncher.ui.components.cardBrush
+import com.rgservice.carlauncher.ui.theme.TileTint
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -91,10 +100,12 @@ class HomeActions(
 )
 
 /**
- * Pantalla de inicio. Se adapta sola al alto disponible:
- *  - alto normal: todo,
- *  - más chico (Grande): el clima pasa a la línea de la fecha,
- *  - mucho más chico (Muy grande): sin dibujo del auto y medidores más chicos.
+ * Pantalla de inicio (diseño "tarjeta grande + columna de accesos").
+ *  - Izquierda: hora y fecha, saludo y clima, modo noche, el auto con el mantenimiento al costado,
+ *    velocidad y barra de velocidad con los datos del viaje.
+ *  - Derecha: app de mapas, accesos rápidos (Música, Radio, Teléfono, Bluetooth), todas las apps
+ *    y ajustes, y la tarjeta Música / Mapa / Accesos.
+ * Se adapta al alto disponible (Normal / Grande / Muy grande).
  */
 @Composable
 fun HomeScreen(state: HomeState, right: RightData, rightActions: RightActions, actions: HomeActions) {
@@ -103,104 +114,115 @@ fun HomeScreen(state: HomeState, right: RightData, rightActions: RightActions, a
         Modifier
             .fillMaxSize()
             .background(c.ground)
-            .background(Brush.radialGradient(listOf(c.glow, Color.Transparent), radius = 1400f)),
+            .background(Brush.radialGradient(listOf(c.glow, Color.Transparent), radius = 1500f)),
     ) {
-        BoxWithConstraints(Modifier.fillMaxSize().padding(28.dp)) {
-            val compact = maxHeight < 600.dp          // Grande
-            val veryCompact = maxHeight < 540.dp      // Muy grande
-            Column(Modifier.fillMaxSize()) {
-                Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    VehicleCard(state, actions, showCar = !veryCompact, modifier = Modifier.weight(372f).fillMaxHeight())
-                    CenterColumn(state, compact, veryCompact, actions, Modifier.weight(452f).fillMaxHeight())
-                    RightCard(right, rightActions, small = veryCompact, modifier = Modifier.weight(400f).fillMaxHeight())
+        BoxWithConstraints(Modifier.fillMaxSize().padding(20.dp)) {
+            val compact = maxHeight < 620.dp          // Grande
+            val veryCompact = maxHeight < 560.dp      // Muy grande
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                HeroCard(state, actions, compact, veryCompact, Modifier.weight(61f).fillMaxHeight())
+                RightColumn(state, right, rightActions, actions, compact, veryCompact, Modifier.weight(39f).fillMaxHeight())
+            }
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ Tarjeta grande (izquierda) */
+
+@Composable
+private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryCompact: Boolean, modifier: Modifier) {
+    CarCard(modifier, radius = 30.dp, padding = PaddingValues(26.dp), brush = cardBrush()) {
+        Column(Modifier.fillMaxSize()) {
+            // Arriba: hora y fecha a la izquierda; saludo, clima y modo noche a la derecha
+            Row(Modifier.fillMaxWidth()) {
+                Clock(onLongPress = actions.onToggleStats, size = if (compact) 64 else 78, modifier = Modifier.weight(1f))
+                Greeting(s, actions, compact)
+            }
+            // Centro: el auto y, al costado, el mantenimiento
+            Row(
+                Modifier.weight(1f).fillMaxWidth().padding(vertical = if (compact) 8.dp else 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (!veryCompact) {
+                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        CarStage()
+                    }
+                    Spacer(Modifier.width(14.dp))
                 }
-                Spacer(Modifier.height(20.dp))
-                Dock(
-                    left = listOf(
-                        slotItem(R.drawable.ic_nav, Slot.Nav, actions),
-                        slotItem(R.drawable.ic_music, Slot.Music, actions),
-                        slotItem(R.drawable.ic_radio, Slot.Radio, actions),
-                        slotItem(R.drawable.ic_phone, Slot.Phone, actions),
-                        DockItem(R.drawable.ic_bt, "Bluetooth", onClick = actions.onBluetooth),
-                        DockItem(
-                            if (state.theme == ThemeMode.Day) R.drawable.ic_sun else R.drawable.ic_moon,
-                            when (state.theme) { ThemeMode.Auto -> "Noche auto"; ThemeMode.Night -> "Noche"; ThemeMode.Day -> "Día" },
-                            active = state.dark,
-                        ) { actions.onCycleTheme() },
-                    ),
-                    right = listOf(
-                        DockItem(R.drawable.ic_apps, "Apps", onClick = actions.onApps),
-                        DockItem(R.drawable.ic_settings, "Ajustes", onClick = actions.onSettings),
-                    ),
+                MaintPanel(
+                    s, actions, compact,
+                    if (veryCompact) Modifier.weight(1f).fillMaxHeight() else Modifier.width(if (compact) 214.dp else 236.dp).fillMaxHeight(),
                 )
             }
-        }
-    }
-}
-
-/* ------------------------------------------------------------------ Columna 1: vehículo */
-
-@Composable
-private fun VehicleCard(s: HomeState, actions: HomeActions, showCar: Boolean, modifier: Modifier) {
-    val c = CarTheme.colors
-    CarCard(modifier, padding = PaddingValues(28.dp)) {
-        Column(Modifier.fillMaxSize()) {
-            Txt("Hola, ${s.name}", 30, weight = FontWeight.Bold, modifier = Modifier.clickable(onClick = actions.onName))
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Txt(greeting(), 18, c.muted, modifier = Modifier.weight(1f))
-                GpsPill(s.gpsOk)
-            }
-            Spacer(Modifier.weight(1f))
-            if (showCar) {
-                CarPicture(Modifier.fillMaxWidth().widthIn(max = 316.dp).aspectRatio(316f / 178f).align(Alignment.CenterHorizontally))
-                Spacer(Modifier.weight(1f))
-            }
-            Row(Modifier.clickable(onClick = actions.onLimit), verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
-                    Txt(s.speedKmh?.toString() ?: "--", 84, if (s.overLimit) c.warn else c.text, FontWeight.Medium, tabular = true, lineHeight = 1f)
-                    Txt("km/h", 20, c.muted, modifier = Modifier.padding(start = 10.dp, bottom = 12.dp))
-                }
-                if (s.speedLimit > 0) {
-                    Box(
-                        Modifier.size(58.dp).border(4.dp, if (s.overLimit) c.warn else c.line, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Txt(s.speedLimit.toString(), 21, if (s.overLimit) c.warn else c.muted, FontWeight.Bold, tabular = true)
-                    }
-                }
-            }
-            Hairline(Modifier.padding(top = 16.dp).fillMaxWidth().height(1.dp))
-            Row(Modifier.padding(top = 16.dp).clickable(onClick = actions.onTrip)) {
-                Stat("${s.trip.km.fmt1()} km", "Viaje", Modifier.weight(1f))
-                Stat(minutesText(s.trip.minutes), "Tiempo", Modifier.weight(1f))
-                Stat("${s.trip.avgKmh} km/h", "Promedio", Modifier.weight(1f))
+            // Abajo: velocidad y barra de velocidad con el viaje
+            Row(Modifier.fillMaxWidth().height(if (compact) 104.dp else 118.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                SpeedTile(s, actions, Modifier.width(if (compact) 206.dp else 232.dp).fillMaxHeight())
+                SpeedBar(s, actions, compact, Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
 }
 
+/** Fondo de las "piezas" dentro de la tarjeta grande. */
 @Composable
-private fun Stat(value: String, label: String, modifier: Modifier) {
-    Column(modifier) {
-        Txt(value, 22, weight = FontWeight.SemiBold, tabular = true)
-        Txt(label, 15, CarTheme.colors.muted)
+private fun tileBg(): Color = CarTheme.colors.let { if (it.isDark) Color(0x590A1220) else Color(0xFFF1F4F8) }
+
+@Composable
+private fun Greeting(s: HomeState, actions: HomeActions, compact: Boolean) {
+    val c = CarTheme.colors
+    Column(horizontalAlignment = Alignment.End, modifier = Modifier.widthIn(max = 330.dp)) {
+        Txt(greeting().uppercase(Locale("es")), 14, c.muted, FontWeight.Medium, letterSpacing = 3f)
+        Txt(
+            s.name.uppercase(Locale("es")), if (compact) 30 else 36, weight = FontWeight.SemiBold, letterSpacing = 1.5f,
+            modifier = Modifier.clickable(onClick = actions.onName),
+        )
+        s.weather?.let { w ->
+            Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.width(22.dp).height(2.dp).background(c.accent))
+                LineIcon(weatherIcon(w.code, s.dark), 18.dp, c.accent, Modifier.padding(start = 8.dp))
+                Txt(
+                    if (w.updatedAgo != null) "${w.tempC}° · ${w.description} · ${w.updatedAgo}" else "${w.tempC}° · ${w.description}",
+                    15, c.muted, modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+            if (!compact) Txt(
+                "Máx ${w.maxC}° · Mín ${w.minC}° · ${w.humidity}% · ${w.windKmh} km/h", 13, c.muted, tabular = true,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        ThemeChip(s, actions.onCycleTheme, Modifier.padding(top = 8.dp))
     }
 }
 
+/** Botón de modo noche (en el diseño: "Luces encendidas"). */
 @Composable
-private fun GpsPill(ok: Boolean) {
+private fun ThemeChip(s: HomeState, onClick: () -> Unit, modifier: Modifier) {
     val c = CarTheme.colors
-    val t = rememberInfiniteTransition(label = "gps")
-    val a by t.animateFloat(0.5f, 0f, infiniteRepeatable(tween(2000), RepeatMode.Restart), label = "ripple")
     Row(
-        Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(c.pill).padding(horizontal = 12.dp),
+        modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(c.pill)
+            .clickable(onClick = onClick).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (ok) Box(Modifier.size(20.dp).alpha(a).background(c.accent, CircleShape))
-            Box(Modifier.size(8.dp).alpha(if (ok) 1f else 0.4f).background(c.accent, CircleShape))
-        }
-        Txt(if (ok) "GPS" else "Sin GPS", 15, c.muted, FontWeight.Medium, modifier = Modifier.padding(start = 4.dp))
+        LineIcon(if (s.theme == ThemeMode.Day) R.drawable.ic_sun else R.drawable.ic_moon, 18.dp, c.accent)
+        Txt(
+            when (s.theme) { ThemeMode.Auto -> "Noche auto"; ThemeMode.Night -> "Noche"; ThemeMode.Day -> "Día" },
+            15, c.text, FontWeight.Medium, modifier = Modifier.padding(start = 6.dp),
+        )
+    }
+}
+
+/** El auto sobre un "piso" iluminado, como en el diseño. */
+@Composable
+private fun CarStage() {
+    val c = CarTheme.colors
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val w = minOf(maxWidth, maxHeight * (316f / 178f))
+        // Luz del piso
+        Box(
+            Modifier.align(Alignment.Center).padding(top = w * 0.42f).width(w).height(w * 0.22f)
+                .background(Brush.radialGradient(listOf(c.accent.copy(alpha = if (c.isDark) 0.30f else 0.16f), Color.Transparent))),
+        )
+        CarPicture(Modifier.width(w).aspectRatio(316f / 178f))
     }
 }
 
@@ -219,53 +241,165 @@ private fun CarPicture(modifier: Modifier) {
             painter = painterResource(R.drawable.auto3d),
             contentDescription = "Tu auto",
             contentScale = ContentScale.Fit,
-            modifier = modifier.padding(horizontal = 12.dp, vertical = 18.dp),
+            modifier = modifier.padding(horizontal = 8.dp, vertical = 10.dp),
         )
     }
 }
 
-/* ------------------------------------------------------------------ Columna 2: hora, clima, mantenimiento */
+/* ------------------------------------------------------------------ Mantenimiento (al costado del auto) */
 
 @Composable
-private fun CenterColumn(s: HomeState, compact: Boolean, veryCompact: Boolean, actions: HomeActions, modifier: Modifier) {
+private fun MaintPanel(s: HomeState, actions: HomeActions, compact: Boolean, modifier: Modifier) {
     val c = CarTheme.colors
-    Column(modifier) {
-        Clock(onLongPress = actions.onToggleStats)
-        if (compact) {
-            s.weather?.let { Txt("${it.tempC}° · ${it.description}", 19, c.muted, modifier = Modifier.align(Alignment.CenterHorizontally)) }
-        } else {
-            s.weather?.let { WeatherStrip(it, s.dark, Modifier.padding(top = 16.dp)) }
+    Column(
+        modifier.clip(RoundedCornerShape(22.dp)).background(tileBg()).border(1.dp, c.line, RoundedCornerShape(22.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Txt("Mantenimiento", 15, c.muted, FontWeight.Medium, modifier = Modifier.weight(1f))
+            Txt(
+                if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 15,
+                if (s.maintWarnings > 0) c.warn else c.accent, FontWeight.SemiBold,
+                modifier = Modifier.clickable(onClick = actions.onMaint).padding(vertical = 6.dp, horizontal = 2.dp),
+            )
         }
-        CarCard(
-            Modifier.padding(top = 16.dp).weight(1f).fillMaxWidth(),
-            padding = PaddingValues(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 18.dp),
-        ) {
-            Column(Modifier.fillMaxSize()) {
-                Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Txt(
-                        if (s.odoKm != null) "Mantenimiento · tablero ${s.odoKm.fmtKm()} km" else "Mantenimiento",
-                        17, c.muted, tabular = true,
-                        modifier = Modifier.weight(1f).clickable(onClick = actions.onOdometer),
-                    )
-                    Txt(
-                        if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 17,
-                        if (s.maintWarnings > 0) c.warn else c.accent, FontWeight.SemiBold,
-                        modifier = Modifier.clickable(onClick = actions.onMaint).padding(8.dp),
-                    )
-                }
-                val ring: Dp = if (veryCompact) 118.dp else 156.dp
-                Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    MaintGauge(s.oil, ring, Modifier.weight(1f).clickable { actions.onGauge(s.oil.id) })
-                    Hairline(Modifier.width(1.dp).fillMaxHeight(0.85f))
-                    MaintGauge(s.gear, ring, Modifier.weight(1f).clickable { actions.onGauge(s.gear.id) })
-                }
+        Txt(
+            if (s.odoKm != null) "Tablero ${s.odoKm.fmtKm()} km" else "Cargar km del tablero", 14,
+            if (s.odoKm != null) c.muted else c.accent, tabular = true,
+            modifier = Modifier.clickable(onClick = actions.onOdometer).padding(bottom = 4.dp),
+        )
+        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.SpaceEvenly) {
+            MaintRow(s.oil, if (compact) 78.dp else 92.dp) { actions.onGauge(s.oil.id) }
+            Hairline(Modifier.fillMaxWidth().height(1.dp))
+            MaintRow(s.gear, if (compact) 78.dp else 92.dp) { actions.onGauge(s.gear.id) }
+        }
+    }
+}
+
+@Composable
+private fun MaintRow(g: Gauge, ring: Dp, onClick: () -> Unit) {
+    val c = CarTheme.colors
+    val color = if (g.warn) c.warn else c.accent
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
+        ArcGauge(fraction = g.fraction, color = color, size = ring, warn = g.warn) {
+            Txt(
+                if (g.configured) g.remainingKm.fmtKm() else "—",
+                size = (ring.value * 0.2f).toInt().coerceAtLeast(14),
+                color = if (g.warn) c.warn else c.text,
+                weight = FontWeight.SemiBold,
+                tabular = true,
+            )
+        }
+        Column(Modifier.weight(1f).padding(start = 8.dp)) {
+            Txt(g.name, 17, weight = FontWeight.SemiBold)
+            Txt(if (g.configured) "km restantes" else "", 13, c.muted)
+            val sub = when {
+                !g.configured -> "Tocá para configurar"
+                g.remainingKm == 0 -> "¡Cambiar ahora!"
+                g.warn -> "Cambiar pronto"
+                g.nextAtKm != null -> "Próx.: ${g.nextAtKm.fmtKm()} km"
+                else -> "Cada ${g.intervalKm.fmtKm()} km"
+            }
+            Txt(sub, 13, if (g.warn) c.warn else c.muted, tabular = true)
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ Velocidad y viaje (abajo) */
+
+@Composable
+private fun SpeedTile(s: HomeState, actions: HomeActions, modifier: Modifier) {
+    val c = CarTheme.colors
+    Row(
+        modifier.clip(RoundedCornerShape(22.dp)).background(tileBg()).border(1.dp, c.line, RoundedCornerShape(22.dp))
+            .clickable(onClick = actions.onLimit).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Txt(s.speedKmh?.toString() ?: "--", 58, if (s.overLimit) c.warn else c.text, FontWeight.SemiBold, tabular = true, lineHeight = 1f)
+        Column(Modifier.weight(1f).padding(start = 8.dp)) {
+            Txt("km/h", 17, c.muted)
+            GpsLabel(s.gpsOk)
+        }
+        if (s.speedLimit > 0) {
+            Box(
+                Modifier.size(46.dp).border(3.dp, if (s.overLimit) c.warn else c.line, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Txt(s.speedLimit.toString(), 17, if (s.overLimit) c.warn else c.muted, FontWeight.Bold, tabular = true)
             }
         }
     }
 }
 
+/** "GPS" con el punto que late cuando hay señal; "Sin GPS" bajo techo. */
 @Composable
-private fun Clock(onLongPress: () -> Unit) {
+private fun GpsLabel(ok: Boolean) {
+    val c = CarTheme.colors
+    val t = rememberInfiniteTransition(label = "gps")
+    val a by t.animateFloat(0.5f, 0f, infiniteRepeatable(tween(2000), RepeatMode.Restart), label = "ripple")
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(contentAlignment = Alignment.Center) {
+            if (ok) Box(Modifier.size(16.dp).alpha(a).background(c.accent, CircleShape))
+            Box(Modifier.size(7.dp).alpha(if (ok) 1f else 0.4f).background(c.accent, CircleShape))
+        }
+        Txt(if (ok) "GPS" else "Sin GPS", 14, if (ok) c.accent else c.muted, FontWeight.Medium, modifier = Modifier.padding(start = 3.dp))
+    }
+}
+
+private const val BAR_MAX = 160f
+
+@Composable
+private fun SpeedBar(s: HomeState, actions: HomeActions, compact: Boolean, modifier: Modifier) {
+    val c = CarTheme.colors
+    Column(
+        modifier.clip(RoundedCornerShape(22.dp)).background(tileBg()).border(1.dp, c.line, RoundedCornerShape(22.dp))
+            .clickable(onClick = actions.onTrip).padding(horizontal = 18.dp, vertical = if (compact) 10.dp else 14.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val w = maxWidth
+            val frac = ((s.speedKmh ?: 0) / BAR_MAX).coerceIn(0f, 1f)
+            val anim by androidx.compose.animation.core.animateFloatAsState(frac, tween(600), label = "bar")
+            Column(Modifier.fillMaxWidth()) {
+                Box(Modifier.fillMaxWidth().height(8.dp)) {
+                    Box(Modifier.fillMaxSize().clip(RoundedCornerShape(4.dp)).background(c.track))
+                    Box(
+                        Modifier.fillMaxWidth(anim).fillMaxHeight().clip(RoundedCornerShape(4.dp))
+                            .background(Brush.horizontalGradient(listOf(c.accent.copy(alpha = 0.55f), if (s.overLimit) c.warn else c.accent))),
+                    )
+                    if (s.speedLimit > 0) {
+                        val lf = (s.speedLimit / BAR_MAX).coerceIn(0f, 1f)
+                        Box(Modifier.padding(start = (w * lf - 1.5.dp).coerceAtLeast(0.dp)).width(3.dp).fillMaxHeight().background(c.warn))
+                    }
+                }
+                // Escala 0 · 60 · 100 · 160
+                Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(18.dp)) {
+                    listOf(0, 60, 100, 160).forEach { v ->
+                        val x = w * (v / BAR_MAX)
+                        val off = when (v) { 0 -> 0.dp; 160 -> (x - 26.dp); else -> (x - 12.dp) }
+                        Txt(v.toString(), 13, c.muted, tabular = true, modifier = Modifier.padding(start = off.coerceAtLeast(0.dp)))
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            Stat("${s.trip.km.fmt1()} km", "Viaje", Modifier.weight(1f))
+            Stat(minutesText(s.trip.minutes), "Tiempo", Modifier.weight(1f))
+            Stat("${s.trip.avgKmh} km/h", "Promedio", Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun Stat(value: String, label: String, modifier: Modifier) {
+    Column(modifier) {
+        Txt(value, 19, weight = FontWeight.SemiBold, tabular = true)
+        Txt(label, 13, CarTheme.colors.muted)
+    }
+}
+
+@Composable
+private fun Clock(onLongPress: () -> Unit, size: Int, modifier: Modifier) {
     val c = CarTheme.colors
     var now by remember { mutableStateOf(Date()) }
     LaunchedEffect(Unit) {
@@ -275,44 +409,128 @@ private fun Clock(onLongPress: () -> Unit) {
     val colon by t.animateFloat(1f, 0.2f, infiniteRepeatable(tween(1000), RepeatMode.Reverse), label = "c")
     val hh = SimpleDateFormat("HH", Locale.US).format(now)
     val mm = SimpleDateFormat("mm", Locale.US).format(now)
-    val date = SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es")).format(now)
-    Column(
-        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    val date = SimpleDateFormat("EEEE · d MMM", Locale("es")).format(now).replace(".", "").uppercase(Locale("es"))
+    Column(modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Txt(hh, 88, weight = FontWeight.Medium, tabular = true, lineHeight = 1f)
-            Txt(":", 88, weight = FontWeight.Medium, modifier = Modifier.alpha(colon).padding(horizontal = 3.dp).padding(bottom = 10.dp), lineHeight = 1f)
-            Txt(mm, 88, weight = FontWeight.Medium, tabular = true, lineHeight = 1f)
+            Txt(hh, size, weight = FontWeight.SemiBold, tabular = true, lineHeight = 1f)
+            Txt(":", size, weight = FontWeight.SemiBold, modifier = Modifier.alpha(colon).padding(horizontal = 2.dp).padding(bottom = (size / 9).dp), lineHeight = 1f)
+            Txt(mm, size, weight = FontWeight.SemiBold, tabular = true, lineHeight = 1f)
         }
-        Txt(date, 21, c.muted)
+        Txt(date, 16, c.muted, FontWeight.Medium, letterSpacing = 1.5f)
+    }
+}
+
+/* ------------------------------------------------------------------ Columna derecha */
+
+@Composable
+private fun RightColumn(
+    s: HomeState, right: RightData, rightActions: RightActions, actions: HomeActions,
+    compact: Boolean, veryCompact: Boolean, modifier: Modifier,
+) {
+    val slots by right.apps.slots.collectAsStateWithLifecycle()
+    val gap = if (compact) 12.dp else 14.dp
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(gap)) {
+        NavAppCard(slots[Slot.Nav], right, actions, Modifier.fillMaxWidth().height(if (veryCompact) 78.dp else if (compact) 86.dp else 96.dp))
+        Row(
+            Modifier.fillMaxWidth().height(if (veryCompact) 92.dp else if (compact) 100.dp else 112.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            QuickTile(R.drawable.ic_music, Slot.Music.label, TileTint.music, Modifier.weight(1f),
+                onLong = { actions.onSlotLong(Slot.Music) }) { actions.onSlot(Slot.Music) }
+            QuickTile(R.drawable.ic_radio, Slot.Radio.label, TileTint.radio, Modifier.weight(1f),
+                onLong = { actions.onSlotLong(Slot.Radio) }) { actions.onSlot(Slot.Radio) }
+            QuickTile(R.drawable.ic_phone, Slot.Phone.label, TileTint.phone, Modifier.weight(1f),
+                onLong = { actions.onSlotLong(Slot.Phone) }) { actions.onSlot(Slot.Phone) }
+            QuickTile(R.drawable.ic_bt, "Bluetooth", TileTint.bluetooth, Modifier.weight(1f), onLong = null, onClick = actions.onBluetooth)
+        }
+        Row(
+            Modifier.fillMaxWidth().height(if (veryCompact) 52.dp else 60.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            AllAppsRow(actions.onApps, Modifier.weight(1f).fillMaxHeight())
+            SquareButton(R.drawable.ic_settings, "Ajustes", actions.onSettings, Modifier.aspectRatio(1f).fillMaxHeight())
+        }
+        RightCard(right, rightActions, small = compact, modifier = Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+/** Tarjeta de la app de mapas elegida (en el diseño: "ZLink5"). Tocar abre; mantener cambia la app. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NavAppCard(pkg: String?, right: RightData, actions: HomeActions, modifier: Modifier) {
+    val c = CarTheme.colors
+    val shape = RoundedCornerShape(24.dp)
+    val installed = pkg != null && right.apps.installed(pkg)
+    val icon = remember(pkg, installed) { if (installed) right.apps.icon(pkg!!) else null }
+    val label = remember(pkg, installed) { if (installed) right.apps.label(pkg!!) else Slot.Nav.label }
+    Row(
+        modifier.clip(shape).background(cardBrush(), shape).border(1.dp, c.line, shape)
+            .combinedClickable(onClick = { actions.onSlot(Slot.Nav) }, onLongClick = { actions.onSlotLong(Slot.Nav) })
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.fillMaxHeight(0.66f).aspectRatio(1f).clip(RoundedCornerShape(16.dp))
+                .background(Brush.linearGradient(listOf(c.accent, c.accent.copy(alpha = 0.7f)))),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.fillMaxSize(0.68f))
+            else LineIcon(R.drawable.ic_nav, 28.dp, c.onAccent)
+        }
+        Column(Modifier.weight(1f).padding(start = 14.dp)) {
+            Txt(label, 23, weight = FontWeight.Bold)
+            Txt(if (installed) "Mapas · navegación" else "Tocá para elegir la app de mapas", 15, c.muted)
+        }
+        LineIcon(R.drawable.ic_chevron, 22.dp, c.muted)
+    }
+}
+
+/** Acceso rápido cuadrado con ícono en un círculo de color (BT Music / Radio / … en el diseño). */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun QuickTile(icon: Int, label: String, tint: Color, modifier: Modifier, onLong: (() -> Unit)?, onClick: () -> Unit) {
+    val c = CarTheme.colors
+    val shape = RoundedCornerShape(22.dp)
+    Column(
+        modifier.fillMaxHeight().clip(shape).background(cardBrush(), shape).border(1.dp, c.line, shape)
+            .combinedClickable(onClick = onClick, onLongClick = onLong).padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            Modifier.fillMaxHeight(0.52f).aspectRatio(1f).clip(CircleShape).background(tint.copy(alpha = if (c.isDark) 0.18f else 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) { LineIcon(icon, 24.dp, tint) }
+        Txt(label, 15, c.text, FontWeight.Medium, align = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 6.dp, start = 4.dp, end = 4.dp))
     }
 }
 
 @Composable
-private fun WeatherStrip(w: Weather, dark: Boolean, modifier: Modifier) {
+private fun AllAppsRow(onClick: () -> Unit, modifier: Modifier) {
     val c = CarTheme.colors
-    CarCard(modifier.fillMaxWidth().height(72.dp), radius = 22.dp, padding = PaddingValues(horizontal = 20.dp)) {
-        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            LineIcon(weatherIcon(w.code, dark), 34.dp, c.accent)
-            Txt("${w.tempC}°", 40, weight = FontWeight.Medium, modifier = Modifier.padding(start = 14.dp), lineHeight = 1f)
-            Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                Txt(if (w.updatedAgo != null) "${w.description} · ${w.updatedAgo}" else w.description, 17)
-                Txt("Máx ${w.maxC}° · Mín ${w.minC}°", 15, c.muted, tabular = true)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Txt("${w.humidity}%", 15, c.muted, tabular = true)
-                Txt("${w.windKmh} km/h", 15, c.muted, tabular = true)
-            }
-        }
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier.clip(shape).background(cardBrush(), shape).border(1.dp, c.line, shape).clickable(onClick = onClick).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LineIcon(R.drawable.ic_apps, 22.dp, c.accent)
+        Txt("Todas las apps", 18, c.text, FontWeight.SemiBold, modifier = Modifier.weight(1f).padding(start = 12.dp))
+        LineIcon(R.drawable.ic_chevron, 20.dp, c.muted)
     }
 }
 
-/* ------------------------------------------------------------------ utilidades */
+@Composable
+private fun SquareButton(icon: Int, desc: String, onClick: () -> Unit, modifier: Modifier) {
+    val c = CarTheme.colors
+    val shape = RoundedCornerShape(20.dp)
+    Box(
+        modifier.clip(shape).background(cardBrush(), shape).border(1.dp, c.line, shape)
+            .semantics { contentDescription = desc }.clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { LineIcon(icon, 24.dp, c.text) }
+}
 
-/** Botón de la barra que abre una app; mantenido = elegir otra. */
-private fun slotItem(icon: Int, s: Slot, a: HomeActions) =
-    DockItem(icon, s.label, onLongClick = { a.onSlotLong(s) }, onClick = { a.onSlot(s) })
+/* ------------------------------------------------------------------ utilidades */
 
 private fun weatherIcon(code: Int, night: Boolean) = when {
     code == 0 -> if (night) R.drawable.ic_moon else R.drawable.ic_sun

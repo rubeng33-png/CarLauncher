@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -32,6 +33,7 @@ fun CarCard(
     radius: Dp = 28.dp,
     padding: PaddingValues = PaddingValues(24.dp),
     borderColor: Color? = null,
+    brush: Brush? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val c = CarTheme.colors
@@ -39,7 +41,7 @@ fun CarCard(
     Box(
         modifier
             .clip(shape)
-            .background(c.card, shape)
+            .then(if (brush != null) Modifier.background(brush, shape) else Modifier.background(c.card, shape))
             .border(1.dp, borderColor ?: c.line, shape)
             .padding(padding),
         content = content,
@@ -58,6 +60,7 @@ fun Txt(
     maxLines: Int = 1,
     tabular: Boolean = false,
     lineHeight: Float = 1.15f,
+    letterSpacing: Float = 0f,
 ) {
     Text(
         text = text,
@@ -72,6 +75,7 @@ fun Txt(
             fontSize = size.sp,
             lineHeight = (size * lineHeight).sp,
             fontFeatureSettings = if (tabular) "tnum" else null,
+            letterSpacing = letterSpacing.sp,
         ),
     )
 }
@@ -90,3 +94,11 @@ fun Hairline(modifier: Modifier) {
 
 fun Int.fmtKm(): String = String.format(java.util.Locale.US, "%,d", this).replace(',', '.')
 fun Double.fmt1(): String = String.format(java.util.Locale.US, "%.1f", this).replace('.', ',')
+
+/** Degradé de las tarjetas del diseño (un poco más clara arriba). */
+@Composable
+fun cardBrush(): Brush {
+    val c = CarTheme.colors
+    return if (c.isDark) Brush.verticalGradient(listOf(Color(0xFF142035), Color(0xFF0C1320)))
+    else Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFF2F5F9)))
+}
