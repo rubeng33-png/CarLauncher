@@ -580,7 +580,7 @@ private fun RightColumn(
         }
         Row(Modifier.fillMaxWidth().weight(164f), horizontalArrangement = Arrangement.spacedBy(if (style == MaintStyle.App) 14.dp else 10.dp)) {
             val four = style != MaintStyle.App
-            val ls = if (four) 16 else 19
+            val ls = if (four) 15 else 19
             if (four) MainAppTile(slots[Slot.Main], right, actions, p, ls, Modifier.weight(1f))
             Tile(R.drawable.ic_music, "BT Music", p.musicCircle, p.musicIcon, p, Modifier.weight(1f), { actions.onSlotLong(Slot.Music) }, ls) { actions.onSlot(Slot.Music) }
             Tile(R.drawable.ic_radio, "Radio", p.radioCircle, p.radioIcon, p, Modifier.weight(1f), { actions.onSlotLong(Slot.Radio) }, ls) { actions.onSlot(Slot.Radio) }
@@ -649,7 +649,7 @@ private fun GaugeItem(g: Gauge, p: HomePalette, modifier: Modifier, onClick: () 
             Column(Modifier.weight(1f).padding(start = 10.dp)) {
                 T(g.name, 17, p.text, FontWeight.SemiBold)
                 T(
-                    when { !g.configured -> "Tocá para cargar"; g.remainingKm == 0 -> "¡Cambiar ahora!"; g.warn -> "¡Cambiar pronto!"; else -> "km restantes" },
+                    when { !g.configured -> "Tocá para cargar"; g.remainingKm == 0 -> "Cambiar ya"; g.warn -> "Cambiar pronto"; else -> "km restantes" },
                     14, if (g.warn) c.warn else p.muted,
                 )
             }
