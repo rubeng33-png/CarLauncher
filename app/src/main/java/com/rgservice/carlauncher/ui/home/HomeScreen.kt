@@ -37,6 +37,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -180,6 +183,21 @@ fun HomeScreen(
     actions: HomeActions,
     car: CarLook = CarLook(),
 ) {
+    // El diseño se midió para 1229 dp de ancho (tamaño Normal). En Grande / Muy grande la pantalla
+    // "mide" menos dp: se achica un poco todo (no del todo, así sigue siendo más grande que Normal)
+    // para que nada se corte.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val k = (maxWidth / 1229.dp).coerceIn(0.5f, 1f)
+        val d = LocalDensity.current
+        val scaled = if (k < 1f) Density(d.density * Math.pow(k.toDouble(), 0.75).toFloat(), d.fontScale) else d
+        CompositionLocalProvider(LocalDensity provides scaled) {
+            HomeContent(state, right, rightActions, actions, car)
+        }
+    }
+}
+
+@Composable
+private fun HomeContent(state: HomeState, right: RightData, rightActions: RightActions, actions: HomeActions, car: CarLook) {
     val p = remember(state.dark) { HomePalette(state.dark) }
     BoxWithConstraints(
         Modifier
