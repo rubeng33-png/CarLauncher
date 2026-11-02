@@ -23,6 +23,26 @@ class HoloVideoView @JvmOverloads constructor(ctx: Context, attrs: AttributeSet?
         isOpaque = false
     }
 
+    /**
+     * Funde el video con lo que hay detrás (fondo de estudio del inicio): el fondo azul oscuro
+     * del video se lleva a negro y se combina en modo "pantalla", así no queda un rectángulo
+     * encima y se ve solo el holograma brillante.
+     */
+    fun blendWithBackground() {
+        val k = 1.25f
+        val off = -0.20f * 255f
+        val m = android.graphics.ColorMatrix(floatArrayOf(
+            k, 0f, 0f, 0f, off,
+            0f, k, 0f, 0f, off,
+            0f, 0f, k, 0f, off,
+            0f, 0f, 0f, 1f, 0f,
+        ))
+        setLayerPaint(android.graphics.Paint().apply {
+            colorFilter = android.graphics.ColorMatrixColorFilter(m)
+            xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SCREEN)
+        })
+    }
+
     fun play(entry: Int, loop: Int, end: (() -> Unit)? = null) {
         if (entry == 0 && loop != 0 && loop == playingRes && mp != null) return // ya está en ese bucle
         inRes = entry; loopRes = loop; onEnd = end

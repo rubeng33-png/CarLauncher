@@ -259,7 +259,7 @@ private fun CarPicture(modifier: Modifier, reflectionGap: Dp) {
         }
     } else if (c.isDark) {
         AndroidView(
-            factory = { ctx -> HoloVideoView(ctx).apply { play(0, R.raw.holo_home) } },
+            factory = { ctx -> HoloVideoView(ctx).apply { blendWithBackground(); play(0, R.raw.holo_home) } },
             modifier = modifier,
             onRelease = { it.stop() },
         )
