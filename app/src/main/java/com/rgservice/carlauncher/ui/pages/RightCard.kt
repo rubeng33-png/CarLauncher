@@ -172,7 +172,7 @@ private fun MusicPage(m: Media, small: Boolean, a: RightActions) {
 @Composable
 private fun MusicCompact(m: Media, pos: Long, h: Dp, a: RightActions) {
     val c = CarTheme.colors
-    val art = (h * 0.5f).coerceIn(84.dp, 136.dp)
+    val art = (h * 0.42f).coerceIn(72.dp, 136.dp)
     val play = (h * 0.27f).coerceIn(56.dp, 72.dp)
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
         Row(verticalAlignment = Alignment.CenterVertically) {
