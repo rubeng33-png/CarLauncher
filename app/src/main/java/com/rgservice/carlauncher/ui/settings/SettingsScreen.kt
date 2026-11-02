@@ -28,6 +28,7 @@ import com.rgservice.carlauncher.R
 import com.rgservice.carlauncher.core.UiSize
 import com.rgservice.carlauncher.data.ThemeMode
 import com.rgservice.carlauncher.data.apps.Slot
+import com.rgservice.carlauncher.data.car.CarProfile
 import com.rgservice.carlauncher.ui.components.CarCard
 import com.rgservice.carlauncher.ui.components.CarScreen
 import com.rgservice.carlauncher.ui.components.Hairline
@@ -54,6 +55,7 @@ class SettingsData(
     val overlayOk: Boolean,
     val version: String,
     val carPhoto: Boolean = false,
+    val car: CarProfile = CarProfile(),
 )
 
 class SettingsActions(
@@ -76,6 +78,10 @@ class SettingsActions(
     val onPreviewWelcome: () -> Unit,
     val onAndroidSettings: () -> Unit,
     val onCarImage: () -> Unit = {},
+    val onCarPhoto: (night: Boolean) -> Unit = {},
+    val onCarText: (key: String, title: String, current: String) -> Unit = { _, _, _ -> },
+    val onCarHolo: (Boolean) -> Unit = {},
+    val onBluetooth: () -> Unit = {},
 )
 
 @Composable
@@ -112,9 +118,24 @@ fun SettingsScreen(d: SettingsData, a: SettingsActions) {
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Group("Auto") {
-                    Item("Imagen del auto", if (d.carPhoto) "Foto propia" else "Modelo 3D", onClick = a.onCarImage)
+                Group("Mi auto") {
+                    Item("Foto del auto (día)", if (d.car.hasDayPhoto) "Foto propia" else "De fábrica", onClick = { a.onCarPhoto(false) })
                     Line()
+                    Item("Foto del auto (noche)", if (d.car.hasNightPhoto) "Foto propia" else "Igual que de día", onClick = { a.onCarPhoto(true) })
+                    Line()
+                    Item("Marca", d.car.brand.ifBlank { "Sin mostrar" }, onClick = { a.onCarText("car_brand", "Marca", d.car.brand) })
+                    Line()
+                    Item("Modelo", d.car.model.ifBlank { "Sin mostrar" }, onClick = { a.onCarText("car_model", "Modelo", d.car.model) })
+                    Line()
+                    Item("Año", d.car.year.ifBlank { "Sin mostrar" }, onClick = { a.onCarText("car_year", "Año", d.car.year) })
+                    Line()
+                    Toggle("Mostrar holograma en lugar de la foto (noche)", d.car.useHologram) { a.onCarHolo(!d.car.useHologram) }
+                    Txt(
+                        "Queda mejor una foto PNG con fondo transparente (por ejemplo, recortada con remove.bg) y el auto de frente en diagonal.",
+                        14, CarTheme.colors.muted, maxLines = 3, modifier = Modifier.padding(start = 8.dp, top = 6.dp),
+                    )
+                }
+                Group("Auto") {
                     Item("Km del tablero", d.odo?.let { "${it.fmtKm()} km" } ?: "Sin cargar", onClick = a.onOdometer)
                     Line()
                     Item("Viaje", "Poner en cero", onClick = a.onTrip)
@@ -131,6 +152,8 @@ fun SettingsScreen(d: SettingsData, a: SettingsActions) {
                     Item("Música (acceso a notificaciones)", if (d.musicOk) "Permitido" else "Falta permitir", warn = !d.musicOk, onClick = a.onMusicPermission)
                     Line()
                     Item("Diagnóstico de música", "Probar botones", onClick = a.onMusicDiag)
+                    Line()
+                    Item("Bluetooth", "Abrir", onClick = a.onBluetooth)
                     Line()
                     Item("Ajustes de Android", "Abrir", onClick = a.onAndroidSettings)
                 }

@@ -234,7 +234,7 @@ private fun MusicTall(m: Media, pos: Long, small: Boolean, a: RightActions) {
 /** Carátula: tocar abre la app que suena; mantener abre el diagnóstico. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ArtBox(m: Media, art: Dp, a: RightActions) {
+internal fun ArtBox(m: Media, art: Dp, a: RightActions) {
     Box(
         Modifier.size(art).clip(RoundedCornerShape(art * 0.16f))
             .background(Brush.linearGradient(listOf(Color(0xFF3D7BD9), Color(0xFF101826))))
@@ -253,7 +253,7 @@ private fun ArtBox(m: Media, art: Dp, a: RightActions) {
 }
 
 @Composable
-private fun PermissionButton(a: RightActions) {
+internal fun PermissionButton(a: RightActions) {
     val c = CarTheme.colors
     Box(
         Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp)).background(c.pill)
@@ -263,7 +263,7 @@ private fun PermissionButton(a: RightActions) {
 }
 
 @Composable
-private fun ProgressLine(pos: Long, dur: Long) {
+internal fun ProgressLine(pos: Long, dur: Long) {
     val c = CarTheme.colors
     val frac = (pos.toFloat() / dur).coerceIn(0f, 1f)
     Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
@@ -272,7 +272,7 @@ private fun ProgressLine(pos: Long, dur: Long) {
 }
 
 @Composable
-private fun RoundButton(icon: Int, size: Dp, filled: Boolean, onClick: () -> Unit) {
+internal fun RoundButton(icon: Int, size: Dp, filled: Boolean, onClick: () -> Unit) {
     val c = CarTheme.colors
     Box(
         Modifier.size(size).clip(CircleShape)
@@ -284,7 +284,7 @@ private fun RoundButton(icon: Int, size: Dp, filled: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun Equalizer(playing: Boolean, modifier: Modifier) {
+internal fun Equalizer(playing: Boolean, modifier: Modifier) {
     val t = rememberInfiniteTransition(label = "eq")
     val speeds = intArrayOf(1100, 900, 1300, 1000)
     Row(
@@ -299,7 +299,7 @@ private fun Equalizer(playing: Boolean, modifier: Modifier) {
     }
 }
 
-private fun mmss(ms: Long): String {
+internal fun mmss(ms: Long): String {
     val s = (ms / 1000).coerceAtLeast(0)
     return "${s / 60}:${String.format(Locale.US, "%02d", s % 60)}"
 }
@@ -308,7 +308,7 @@ private fun mmss(ms: Long): String {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MapPage(d: RightData, a: RightActions) {
+internal fun MapPage(d: RightData, a: RightActions) {
     val c = CarTheme.colors
     var zoom by remember { mutableIntStateOf(d.initialZoom) }
     val shape = RoundedCornerShape(22.dp)
@@ -354,7 +354,7 @@ private fun MapPage(d: RightData, a: RightActions) {
 }
 
 @Composable
-private fun NavBanner(n: NavInfo, modifier: Modifier, onClick: () -> Unit) {
+internal fun NavBanner(n: NavInfo, modifier: Modifier, onClick: () -> Unit) {
     val c = CarTheme.colors
     Row(
         modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.card.copy(alpha = 0.95f))
@@ -449,6 +449,67 @@ private fun AppsPage(d: RightData, small: Boolean, a: RightActions) {
             }
             if (showHint) Txt("Mantené apretada una app para cambiarla o quitarla", 14, c.muted, align = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+
+/* ------------------------------------------------------------------ Mini reproductor (inicio nuevo) */
+
+/**
+ * Mini reproductor de la columna derecha: carátula chica (tocar = abrir la app que suena,
+ * mantener = diagnóstico), título y "artista · fuente", progreso con tiempos y ⏮ ⏯ ⏭.
+ * Sin permiso de música muestra el botón para permitirlo.
+ */
+@Composable
+fun MiniPlayer(m: Media, a: RightActions, modifier: Modifier) {
+    val c = CarTheme.colors
+    var pos by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(m) {
+        while (true) {
+            pos = MediaRepository.positionNow(m)
+            if (!m.playing) break
+            delay(500)
+        }
+    }
+    BoxWithConstraints(modifier) {
+        val tall = maxHeight > 150.dp
+        val art = if (tall) 64.dp else 52.dp
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ArtBox(m, art, a)
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Txt(m.title, 18, weight = FontWeight.SemiBold)
+                    Txt(listOf(m.artist, m.source).filter { it.isNotBlank() }.joinToString(" · "), 14, c.muted)
+                }
+                if (!tall && m.hasPermission) {
+                    RoundButton(R.drawable.ic_prev, 40.dp, filled = false, onClick = a.onPrevious)
+                    Spacer(Modifier.width(6.dp))
+                    RoundButton(if (m.playing) R.drawable.ic_pause else R.drawable.ic_play, 48.dp, filled = true, onClick = a.onPlayPause)
+                    Spacer(Modifier.width(6.dp))
+                    RoundButton(R.drawable.ic_next, 40.dp, filled = false, onClick = a.onNext)
+                }
+            }
+            if (!m.hasPermission) {
+                PermissionButton(a)
+            } else {
+                if (m.durationMs > 0) {
+                    Column {
+                        ProgressLine(pos, m.durationMs)
+                        Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                            Txt(mmss(pos), 13, c.muted, tabular = true, modifier = Modifier.weight(1f))
+                            Txt(mmss(m.durationMs), 13, c.muted, tabular = true)
+                        }
+                    }
+                }
+                if (tall) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    RoundButton(R.drawable.ic_prev, 46.dp, filled = false, onClick = a.onPrevious)
+                    Spacer(Modifier.width(16.dp))
+                    RoundButton(if (m.playing) R.drawable.ic_pause else R.drawable.ic_play, 58.dp, filled = true, onClick = a.onPlayPause)
+                    Spacer(Modifier.width(16.dp))
+                    RoundButton(R.drawable.ic_next, 46.dp, filled = false, onClick = a.onNext)
+                }
+            }
         }
     }
 }

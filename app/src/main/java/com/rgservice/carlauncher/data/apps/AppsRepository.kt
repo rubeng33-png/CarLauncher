@@ -23,6 +23,10 @@ enum class Slot(val key: String, val label: String, val default: String?) {
     Music("slot_music", "Música", null),
     Radio("slot_radio", "Radio", null),
     Phone("slot_phone", "Teléfono", null),
+    // Inicio nuevo: tarjeta grande de la app principal (p. ej. ZLink5) y mosaico Ecualizador.
+    // La primera vez se elige la app con el selector de siempre (no se adivina el paquete).
+    Main("slot_main", "App principal", null),
+    Eq("slot_eq", "Ecualizador", null),
 }
 
 /** Apps instaladas, accesos favoritos, botones de la barra y destinos Casa/Trabajo. */

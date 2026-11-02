@@ -7,6 +7,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,14 +38,41 @@ import com.rgservice.carlauncher.ui.theme.CarTheme
 /** Todas las apps instaladas. Tocar abre; mantener apretada = opciones. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppsScreen(apps: AppsRepository, onBack: () -> Unit, onOpen: (String) -> Unit, onLong: (String) -> Unit) {
+fun AppsScreen(
+    apps: AppsRepository, onBack: () -> Unit, onOpen: (String) -> Unit, onLong: (String) -> Unit,
+    onFavLong: (String) -> Unit = {},
+) {
     val c = CarTheme.colors
     val list by produceState<List<AppEntry>?>(null, apps) { value = apps.all() }
+    val favs by apps.favs.collectAsStateWithLifecycle()
     CarScreen(
         title = "Apps",
         subtitle = list?.let { "${it.size} apps · mantené apretada una para agregarla a Accesos" },
         onBack = onBack,
     ) {
+        // Accesos: hasta 6 apps favoritas (antes estaban en la tarjeta del inicio)
+        if (favs.isNotEmpty()) {
+            CarCard(Modifier.fillMaxWidth().padding(bottom = 12.dp), padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Txt("Accesos", 17, c.muted, modifier = Modifier.width(96.dp))
+                    favs.take(6).forEach { pkg ->
+                        Column(
+                            Modifier.weight(1f).clip(RoundedCornerShape(16.dp))
+                                .combinedClickable(onClick = { onOpen(pkg) }, onLongClick = { onFavLong(pkg) })
+                                .padding(vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            val icon = remember(pkg) { apps.icon(pkg) }
+                            if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.size(48.dp))
+                            else Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(c.pill))
+                            Txt(remember(pkg) { apps.label(pkg) }, 14, align = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, start = 4.dp, end = 4.dp))
+                        }
+                    }
+                    repeat(6 - favs.take(6).size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
         CarCard(Modifier.weight(1f).fillMaxWidth(), padding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
             val l = list
             if (l == null) {

@@ -60,7 +60,8 @@ import com.rgservice.carlauncher.ui.components.fmtKm
 import com.rgservice.carlauncher.ui.theme.Barlow
 import com.rgservice.carlauncher.ui.theme.CarTheme
 import kotlinx.coroutines.delay
-import com.rgservice.carlauncher.data.CarPhoto
+import com.rgservice.carlauncher.data.car.CarRepository
+import androidx.compose.ui.platform.LocalContext
 
 /** Ventanas que se abren desde el inicio. */
 sealed interface HomeDialog {
@@ -79,13 +80,16 @@ sealed interface HomeDialog {
     data class DateEdit(val id: String) : HomeDialog
     data object AddItem : HomeDialog
     data object MusicDiag : HomeDialog
-    data object CarImage : HomeDialog
+    /** Foto del auto: de día (night = false) o de noche. */
+    data class CarImage(val night: Boolean = false) : HomeDialog
+    /** Marca / modelo / año del auto (key = car_brand, car_model, car_year). */
+    data class CarText(val key: String, val title: String, val current: String) : HomeDialog
 }
 
 @Composable
 fun HomeDialogs(
     dialog: HomeDialog?, s: HomeState, vm: HomeViewModel,
-    onPickPhoto: () -> Unit = {}, onClearPhoto: () -> Unit = {},
+    onPickPhoto: (night: Boolean) -> Unit = {}, onClearPhoto: (night: Boolean) -> Unit = {},
     open: (HomeDialog?) -> Unit,
 ) {
     val maint = vm.repo.maint
@@ -203,24 +207,43 @@ fun HomeDialogs(
         }
 
         is HomeDialog.CarImage -> {
-            val hasPhoto = CarPhoto.photo.collectAsState().value != null
-            CarDialog("Imagen del auto", onDismiss = close) {
+            val look by CarRepository.look.collectAsState()
+            val has = if (dialog.night) look.profile.hasNightPhoto else look.profile.hasDayPhoto
+            CarDialog(if (dialog.night) "Foto del auto (noche)" else "Foto del auto (día)", onDismiss = close) {
                 Txt(
-                    if (hasPhoto) "Ahora: tu foto (se ve de día y de noche)."
-                    else "Ahora: modelo 3D (holograma en modo noche). Elegí una foto de tu auto de la galería.",
-                    18, CarTheme.colors.muted, maxLines = 3, modifier = Modifier.padding(bottom = 18.dp),
+                    when {
+                        dialog.night && has -> "Ahora: tu foto de noche."
+                        dialog.night -> "Opcional. Si no elegís una, de noche se usa la foto de día."
+                        has -> "Ahora: tu foto."
+                        else -> "Ahora: la foto de fábrica."
+                    } + "\nQueda mejor una foto PNG con fondo transparente (por ejemplo, recortada con remove.bg) y el auto de frente en diagonal.",
+                    17, CarTheme.colors.muted, maxLines = 4, modifier = Modifier.padding(bottom = 18.dp),
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DialogButton(if (hasPhoto) "Volver al modelo 3D" else "Cerrar", primary = false, Modifier.weight(1f)) {
-                        if (hasPhoto) onClearPhoto()
+                    DialogButton(
+                        when { !has -> "Cerrar"; dialog.night -> "Quitar"; else -> "Usar la de fábrica" },
+                        primary = false, Modifier.weight(1f),
+                    ) {
+                        if (has) onClearPhoto(dialog.night)
                         close()
                     }
-                    DialogButton(if (hasPhoto) "Cambiar foto" else "Elegir de la galería", primary = true, Modifier.weight(1.2f)) {
+                    DialogButton("Elegir foto", primary = true, Modifier.weight(1f)) {
                         close()
-                        onPickPhoto()
+                        onPickPhoto(dialog.night)
                     }
                 }
             }
+        }
+
+        is HomeDialog.CarText -> {
+            val ctx = LocalContext.current
+            TextDialog(
+                title = dialog.title,
+                initial = dialog.current,
+                maxLen = 24,
+                onDismiss = close,
+                onSave = { CarRepository.setText(ctx, dialog.key, it); close() },
+            )
         }
 
         is HomeDialog.FavMenu -> CarDialog(vm.apps.label(dialog.pkg), onDismiss = close) {

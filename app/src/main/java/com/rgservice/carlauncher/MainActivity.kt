@@ -1,6 +1,6 @@
 package com.rgservice.carlauncher
 
-import com.rgservice.carlauncher.data.CarPhoto
+import com.rgservice.carlauncher.data.car.CarRepository
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.Manifest
@@ -69,13 +69,16 @@ class MainActivity : ComponentActivity() {
     private val resumeTick = mutableIntStateOf(0)
 
     /** Elegir la foto del auto de la galería (no necesita permisos). */
+    private var photoForNight = false
     private val pickPhoto = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) lifecycleScope.launch {
-            toast(if (CarPhoto.save(this@MainActivity, uri)) "Listo: foto del auto guardada" else "No se pudo usar esa imagen")
+            val ok = CarRepository.savePhoto(this@MainActivity, uri, photoForNight)
+            toast(if (ok) "Listo: foto del auto guardada" else "No se pudo usar esa imagen")
         }
     }
 
-    private fun openGallery() {
+    private fun openGallery(night: Boolean) {
+        photoForNight = night
         try { pickPhoto.launch("image/*") } catch (e: Exception) { toast("No hay galería para elegir la foto") }
     }
 
@@ -92,7 +95,7 @@ class MainActivity : ComponentActivity() {
             toast("Car Launcher falló varias veces. Podés elegir otra pantalla de inicio.")
             openHomeSettings()
         }
-        lifecycleScope.launch { CarPhoto.load(this@MainActivity) }
+        CarRepository.start(this)
         welcomePref.value = vm.welcomeOn
         ignPref.value = vm.ignitionOpen
         welcome.value = savedInstanceState == null && vm.welcomeOn
@@ -121,7 +124,7 @@ class MainActivity : ComponentActivity() {
             onBluetooth = {
                 if (!vm.apps.start(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) toast("No se pudo abrir Bluetooth")
             },
-            onCarImage = { dialog.value = HomeDialog.CarImage },
+            onCarImage = { dialog.value = HomeDialog.CarImage(night = false) },
         )
 
         val rightActions = RightActions(
@@ -197,7 +200,13 @@ class MainActivity : ComponentActivity() {
                 vm.apps.start(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             },
             onPreviewWelcome = { screen.value = Screen.Home; welcome.value = true },
-            onCarImage = { dialog.value = HomeDialog.CarImage },
+            onCarImage = { dialog.value = HomeDialog.CarImage(night = false) },
+            onCarPhoto = { night -> dialog.value = HomeDialog.CarImage(night) },
+            onCarText = { key, title, cur -> dialog.value = HomeDialog.CarText(key, title, cur) },
+            onCarHolo = { on -> CarRepository.setHologram(this, on) },
+            onBluetooth = {
+                if (!vm.apps.start(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) toast("No se pudo abrir Bluetooth")
+            },
         )
 
         val initialPage = vm.initialPage
@@ -234,7 +243,8 @@ class MainActivity : ComponentActivity() {
                                         favs = favs, dest = dest, apps = vm.apps,
                                         initialPage = initialPage, initialZoom = initialZoom,
                                     )
-                                    HomeScreen(state, right, rightActions, actions)
+                                    val car by CarRepository.look.collectAsStateWithLifecycle()
+                                    HomeScreen(state, right, rightActions, actions, car)
                                 }
                                 Screen.Maint -> {
                                     val m by vm.maint.collectAsStateWithLifecycle()
@@ -248,10 +258,11 @@ class MainActivity : ComponentActivity() {
                                         else if (vm.apps.favs.value.size >= 6) toast("Accesos está lleno (6). Quitá una primero")
                                         else { vm.apps.addFav(pkg); toast("${vm.apps.label(pkg)} agregada a Accesos") }
                                     },
+                                    onFavLong = { pkg -> dialog.value = HomeDialog.FavMenu(pkg) },
                                 )
                                 Screen.Settings -> {
                                     val slots by vm.apps.slots.collectAsStateWithLifecycle()
-                                    val carPhoto by CarPhoto.photo.collectAsStateWithLifecycle()
+                                    val carLook by CarRepository.look.collectAsStateWithLifecycle()
                                     val media by vm.media.collectAsStateWithLifecycle()
                                     val tick by resumeTick
                                     SettingsScreen(
@@ -265,7 +276,8 @@ class MainActivity : ComponentActivity() {
                                             ignitionOpen = ignPref.value,
                                             isHome = remember(tick) { isDefaultHome() },
                                             overlayOk = remember(tick) { Settings.canDrawOverlays(this@MainActivity) },
-                                            carPhoto = carPhoto != null,
+                                            carPhoto = carLook.profile.hasDayPhoto,
+                                            car = carLook.profile,
                                         ),
                                         settingsActions,
                                     )
@@ -281,7 +293,7 @@ class MainActivity : ComponentActivity() {
                     HomeDialogs(
                         open, state, vm,
                         onPickPhoto = ::openGallery,
-                        onClearPhoto = { lifecycleScope.launch { CarPhoto.clear(this@MainActivity) } },
+                        onClearPhoto = { night -> lifecycleScope.launch { CarRepository.clearPhoto(this@MainActivity, night) } },
                     ) { dialog.value = it }
                 }
             }

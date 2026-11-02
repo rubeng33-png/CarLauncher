@@ -1,8 +1,8 @@
 package com.rgservice.carlauncher
 
 import android.content.Context
-import android.graphics.BitmapFactory
-import com.rgservice.carlauncher.data.CarPhoto
+import com.rgservice.carlauncher.data.car.CarLook
+import com.rgservice.carlauncher.data.car.CarRepository
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -63,9 +63,10 @@ class HomeScreenshotTest {
         playing = true, positionMs = 12_000, positionAt = 0, durationMs = 239_000, hasSession = true,
     )
 
-    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0, photo: Boolean = false) {
+    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        CarPhoto.setForTest(if (photo) BitmapFactory.decodeResource(ctx.resources, R.drawable.auto3d) else null)
+        val car = CarLook()   // Toyota · New Corolla · 2001, foto de fábrica
+        CarRepository.setForTest(car)
         val apps = AppsRepository(ctx, ctx.getSharedPreferences("test", Context.MODE_PRIVATE))
         val home = HomeActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         val right = RightActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {})
@@ -73,7 +74,7 @@ class HomeScreenshotTest {
         rule.mainClock.autoAdvance = false
         rule.setContent {
             CarLauncherTheme(dark = dark) {
-                DesignScale(size) { HomeScreen(state(dark), data, right, home) }
+                DesignScale(size) { HomeScreen(state(dark), data, right, home, car) }
             }
         }
         rule.mainClock.advanceTimeBy(2500)
@@ -89,6 +90,5 @@ class HomeScreenshotTest {
     @Test fun oscuroGrande() = shot("3-oscuro-grande", true, UiSize.Grande)
     @Test fun claroGrande() = shot("4-claro-grande", false, UiSize.Grande)
     @Test fun oscuroMuyGrande() = shot("5-oscuro-muy-grande", true, UiSize.MuyGrande)
-    @Test fun oscuroAccesos() = shot("6-oscuro-accesos", true, UiSize.Normal, page = 2)
-    @Test fun oscuroConFoto() = shot("7-oscuro-con-foto", true, UiSize.Normal, photo = true)
+    @Test fun claroMuyGrande() = shot("6-claro-muy-grande", false, UiSize.MuyGrande)
 }
