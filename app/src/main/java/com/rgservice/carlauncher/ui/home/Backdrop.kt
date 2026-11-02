@@ -97,11 +97,11 @@ fun StudioBackdrop(stage: Rect?, modifier: Modifier) {
             Offset(0f, horizon), Offset(size.width, horizon), strokeWidth = 2f,
         )
 
-        // 5) Destellos del piso mojado: franjas de luz que bajan desde el auto
+        // 5) Destellos del piso mojado: franjas de luz cortas que bajan desde el auto
         val wheels = car.top + car.height * 0.90f
-        val streakH = (floorBottom - wheels) * 0.85f
-        val streakCol = if (dark) Color.White.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.9f)
-        listOf(-0.34f to 0.020f, -0.12f to 0.035f, 0.10f to 0.03f, 0.33f to 0.022f, 0.46f to 0.012f, -0.46f to 0.012f).forEach { (dx, wf) ->
+        val streakH = (floorBottom - wheels) * 0.42f
+        val streakCol = if (dark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.45f)
+        listOf(-0.33f to 0.016f, -0.10f to 0.026f, 0.12f to 0.022f, 0.34f to 0.016f).forEach { (dx, wf) ->
             val x = cx + car.width * dx
             val w = car.width * wf
             drawRect(

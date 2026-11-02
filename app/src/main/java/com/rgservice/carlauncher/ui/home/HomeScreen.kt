@@ -53,6 +53,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.boundsInRoot
@@ -186,7 +187,7 @@ private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryC
 
 /** Fondo de las "piezas" dentro de la tarjeta grande. */
 @Composable
-private fun tileBg(): Color = CarTheme.colors.let { if (it.isDark) Color(0x590A1220) else Color(0xFFF1F4F8) }
+private fun tileBg(): Color = CarTheme.colors.let { if (it.isDark) Color(0xB30A1220) else Color(0xF2F1F4F8) }
 
 @Composable
 private fun Greeting(s: HomeState, actions: HomeActions, compact: Boolean) {
@@ -278,23 +279,25 @@ private fun CarPicture(modifier: Modifier, reflectionGap: Dp) {
     }
 }
 
-/** Reflejo del auto en el piso brillante: la imagen dada vuelta, que se desvanece hacia abajo. */
+/** Reflejo del auto en el piso brillante: la imagen dada vuelta y achatada, pegada a las ruedas. */
 @Composable
 private fun Reflection(height: Dp, modifier: Modifier, content: @Composable (Modifier) -> Unit) {
     val c = CarTheme.colors
     content(
         modifier
-            .offset(y = height * 0.86f)
+            .offset(y = -height * 0.04f)
             .graphicsLayer {
-                scaleY = -1f
-                alpha = if (c.isDark) 0.30f else 0.22f
+                // Se da vuelta desde el borde de abajo: queda justo debajo del auto
+                transformOrigin = TransformOrigin(0.5f, 1f)
+                scaleY = -0.42f
+                alpha = if (c.isDark) 0.32f else 0.24f
                 compositingStrategy = CompositingStrategy.Offscreen
             }
             .drawWithContent {
                 drawContent()
-                // Dibujado antes de dar vuelta: abajo (las ruedas) visible, arriba transparente
+                // Antes de dar vuelta: abajo (las ruedas) visible, se desvanece hacia arriba
                 drawRect(
-                    Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black),
+                    Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black),
                     blendMode = BlendMode.DstIn,
                 )
             },
