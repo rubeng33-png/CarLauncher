@@ -1,88 +1,85 @@
-CAR LAUNCHER 2.5
-===========================
+CAR LAUNCHER 3 – Etapa 3 (Kotlin + Jetpack Compose)
+====================================================
+
+NUEVO EN LA ETAPA 3: tarjeta derecha con páginas y barra útil
+- Tarjeta derecha con 3 páginas: Música · Mapa · Accesos. Se pasa deslizando de costado
+  o tocando las bolitas de arriba a la derecha. Recuerda la última página.
+- MÚSICA: tocá "Permitir ver y controlar la música" y activá "Car Launcher 3" en la lista
+  (Acceso a notificaciones). Muestra tema, artista, carátula, progreso y controla
+  anterior / play-pausa / siguiente de Spotify, YouTube Music, la música Bluetooth, etc.
+  Si la app de Bluetooth de la radio no da los datos del tema, igual controla con teclas
+  multimedia: para eso mantené apretado "Música" en la barra y elegí esa app de Bluetooth.
+  Tocar la carátula abre la app que está sonando.
+- MAPA: tus calles (OpenStreetMap) con tu posición por GPS. Lo que se ve con internet queda
+  guardado y después se ve sin conexión. + / − para el zoom. Tocar el mapa abre Maps.
+  "Casa" y "Trabajo": la primera vez elegís el destino (dirección o "Estoy acá ahora");
+  después un toque arranca la navegación. Mantener apretado para cambiarlos.
+  Con Maps o Waze navegando aparece arriba el próximo giro (tocalo para volver a Maps).
+- ACCESOS: hasta 6 apps grandes. "Agregar" para sumar; mantener apretada para cambiar/quitar.
+- BARRA: Mapas, Música, Radio y Teléfono abren la app que elijas. La primera vez te pide
+  cuál; mantener apretado para cambiarla. Bluetooth abre los ajustes de Bluetooth.
+
+QUÉ PROBAR (etapa 3)
+1. Música con el celular por Bluetooth: ¿se ve el tema? ¿andan anterior/siguiente?
+   Si no se ve el tema pero los botones andan, ya está resuelto lo "estático".
+   Si los botones no andan, decime el nombre de la app de música Bluetooth de la radio.
+2. Mapa con y sin internet; Casa/Trabajo; navegando con Maps, que aparezca el giro.
+3. Accesos y botones de la barra.
+
+DE LA ETAPA 2 (datos reales)
+- Velocidad, viaje (km, tiempo, promedio) y km del tablero por la antena GPS (sin internet).
+- Clima real (Open-Meteo). Sin internet muestra el último guardado con "hace X h".
+- Mantenimiento por el km del tablero (aceite motor y aceite caja).
+- Modo noche automático por la salida/puesta del sol.
+- Se sigue instalando como app aparte ("Car Launcher 3"); no reemplaza el inicio todavía.
+
+QUÉ PROBAR EN LA RADIO
+1. Al abrir pide permiso de ubicación: "Permitir". Tiene que aparecer "GPS" (punto que late)
+   y la velocidad real al moverte.
+2. Tocá "Mantenimiento · tablero" o un medidor:
+   - primero pide el km que marca el tablero del auto (una sola vez),
+   - después, en cada medidor: "Lo cambié hoy", o "Próximo cambio › Cambiar" para poner el
+     número del sticker del taller, y "Se cambia cada" para el intervalo.
+   - El medidor muestra cuánto falta. A 500 km se pone naranja y late.
+3. Tocá "Hola, conductor" para poner tu nombre.
+4. Tocá la velocidad para elegir el aviso (40…120 o sin aviso).
+5. Tocá los datos del viaje para ponerlo en cero (igual vuelve a cero solo tras 20 min parado).
+6. Botón de la barra "Noche auto" → "Noche" → "Día" → "Noche auto".
+7. Sacá y poné el contacto: la radio debe dormir y despertar normal (el GPS se suelta al apagar).
+
+MEDIR EL ARRANQUE REAL (importante)
+- La versión "debug" que instala ▶ Run es lenta a propósito. Para medir de verdad:
+  Build › Select Build Variant › app: release  y después ▶ Run (ya está firmada para instalar).
+- Si ya tenías instalada la debug y da error de firma, desinstalá "Car Launcher 3" primero.
+- Mandame foto del recuadro "Prueba · arranque".
 
 CÓMO COMPILAR
-- Abrí la carpeta CarLauncher13 en Android Studio y tocá Run (o Build > Build APK).
-- No usa librerías externas: solo Android y Kotlin, igual que la versión anterior.
+- Abrí la carpeta CarLauncher en Android Studio. Ignorá "Project update recommended".
+- Si sale un error en rojo en la pestaña Build, mandame el texto.
 
-PRIMER USO EN LA RADIO
-1. Instalá el APK y tocá Inicio: elegí "Car Launcher" y "Siempre".
-   (Si la radio no pregunta: Ajustes > Apps > Apps predeterminadas > App de inicio.)
-2. Aceptá el permiso de ubicación (velocímetro, viaje, km de mantenimiento, clima y modo noche por sol).
-3. En Ajustes del launcher > Permisos > "Música y navegación": activá Car Launcher en
-   "Acceso a notificaciones". Sirve para controlar la música y mostrar el próximo giro de Maps/Waze.
-4. Si activás "Abrir al dar contacto", Android puede pedir "Mostrar sobre otras apps": activalo.
+ORGANIZACIÓN DEL CÓDIGO
+app/src/main/java/com/rgservice/carlauncher/
+  MainActivity.kt                   entrada: pide permiso, arranca el GPS, abre las ventanas
+  core/DesignScale.kt               escala Normal/Grande/Muy grande
+  core/HoloVideoView.kt             reproductor del holograma
+  data/HomeState.kt                 todo lo que muestra el inicio
+  data/CarRepository.kt             junta GPS + guardado + clima + hora en un solo estado
+  data/Prefs.kt                     preferencias guardadas
+  data/Sun.kt                       salida/puesta del sol (modo noche automático)
+  data/location/TripService.kt      servicio GPS (viaje, tablero; suelta el GPS al apagar)
+  data/location/LiveGps.kt          última lectura del GPS
+  data/maint/Maintenance.kt         mantenimiento por km del tablero
+  data/weather/WeatherRepository.kt clima con memoria sin internet
+  data/media/MediaRepository.kt     música de cualquier app + controles (sesión o teclas)
+  data/media/CarNotificationListener.kt  permiso de música + próximo giro de Maps/Waze
+  data/apps/AppsRepository.kt       apps instaladas, accesos, botones de la barra, Casa/Trabajo
+  core/MapTileView.kt               mapa OpenStreetMap con caché sin conexión
+  ui/pages/RightCard.kt             tarjeta derecha: Música, Mapa, Accesos
+  ui/home/HomeScreen.kt             pantalla de inicio
+  ui/home/Dialogs.kt                ventanas (tablero, mantenimiento, nombre, aviso, viaje)
+  ui/home/HomeViewModel.kt          une datos + preferencias
+  ui/components/                    tarjeta, textos, medidores, barra, medidor de rendimiento
 
-QUÉ HAY DE NUEVO (2.5)
-- Maps dentro de la tarjeta: Casa, Trabajo, Buscar y "volver al mapa" abren Google Maps como
-  ventana del tamaño y en el lugar de la tarjeta del mapa. El resto del launcher queda visible.
-  Requiere en la radio: Opciones de desarrollador › "Habilitar ventanas de forma libre"
-  (y si aparece "Forzar actividades redimensionables") y reiniciar.
-  Sin eso, Maps se abre a pantalla completa. Se activa o desactiva en Ajustes › Destinos.
-
-QUÉ HAY DE NUEVO (2.4)
-- Casa, Trabajo, Buscar y las apps se abren a pantalla completa en su propia ventana.
-  Antes Google Maps podía quedar como ventanita flotante encima del launcher.
-
-QUÉ HAY DE NUEVO (2.3)
-- Música: play/pausa, anterior y siguiente ahora funcionan con la música Bluetooth de la radio.
-  Si la app de música no responde (sesión sin título ni estado, típico del Bluetooth de las
-  radios), el launcher usa las teclas multimedia del sistema, igual que los botones del volante,
-  y lo recuerda para esa app.
-- Ajustes › Música › Control: Automático (recomendado), Sesión o Teclas.
-  Si con Automático no responde, elegí "Teclas".
-
-QUÉ HAY DE NUEVO (2.2)
-- Barra de abajo: íconos y textos centrados.
-- Ajustes › Pantalla › Tamaño de pantalla: Normal, Grande y Muy grande (para pantallas de 7").
-- Tarjeta derecha con 3 páginas (deslizá o tocá los puntitos): Música, Mapa y Accesos.
-  · Mapa: tu posición por GPS sobre el mapa (las calles se guardan la primera vez que hay
-    internet y después se ven sin conexión). Botones Casa / Trabajo abren Google Maps ya
-    navegando. Mantené presionado Casa o Trabajo para cambiar el destino.
-  · Accesos: hasta 6 apps favoritas grandes ("+" para agregar, mantener para cambiar).
-- Música: si falta el permiso aparece "Activar control de música". Con el permiso,
-  anterior / siguiente funcionan con la música Bluetooth y Spotify.
-- Mantenimiento por km del tablero: cargás una vez lo que marca el tablero y en cada ítem
-  elegís "Lo cambié hoy", "Etiqueta del taller" (próximo cambio a los … km) o "Lo cambié
-  a los … km". Opcional: aviso por tiempo (3, 6 o 12 meses). "Km del tablero" corrige todo.
-- Clima sin internet: muestra el último descargado y hace cuánto.
-
-INTERNET EN LA RADIO SIN COMPARTIR A MANO
-- Android (Samsung): Rutinas › "Si se conecta al Bluetooth del auto" → "Activar Zona Wi-Fi".
-  Otras marcas: "Modos" / app de automatización con la misma idea.
-- iPhone: dejá "Compartir Internet" activado; la radio se reconecta sola a esa red.
-- Internet por Bluetooth: solo si la radio lo soporta (Ajustes de Android › Bluetooth ›
-  tu celular › "Acceso a Internet").
-- Google Maps sin internet: en Maps › tu perfil › Mapas sin conexión › descargá tu zona.
-
-QUÉ HAY DE NUEVO (2.1)
-- Auto holográfico (sedán compacto) animado en el inicio, en tema oscuro.
-- Bienvenida: el holograma se arma con un escaneo, saludo tipeado y chequeo rápido
-  (aceite, neumáticos y documentos con datos reales).
-- Mantenimiento: visor holográfico. Al elegir un ítem la cámara va a esa pieza y la resalta:
-  aceite de motor (motor + flujo de aceite), aceite de caja, filtro de aire, neumáticos
-  (rueda girando y perfil), frenos y correa. Botones: Cambio hecho, Intervalo, Ajustar km.
-- Los videos están en app/src/main/res/raw (unos 17 MB). Se reproducen sin sonido.
-- En tema claro el inicio usa el modelo 3D fijo; con foto propia se muestra tu foto.
-
-QUÉ HAY DE NUEVO (2.0)
-- Inicio: auto 3D animado, velocímetro GPS con aviso de límite, datos del viaje (km, tiempo, promedio),
-  clima, medidores de aceite de motor y de caja, música con carátula, progreso y nombre de la app.
-- Navegación: mientras Maps/Waze navega, la tarjeta del auto muestra el próximo giro, la calle,
-  la llegada, el tiempo y la distancia restantes. Tocala para volver al mapa.
-- Bienvenida: animación de 2 segundos al encender (se puede desactivar en Ajustes).
-- Mantenimiento: aceites, filtro de aire, neumáticos, frenos, correa + los que agregues;
-  vencimientos por fecha (seguro, habilitación, revisión técnica, licencia + los que agregues).
-- Apps: buscador, todas las apps con su ícono, mantener presionada para fijarla en la barra.
-- Ajustes: nombre, imagen del auto (modelo 3D o tu foto), modo noche (automático por sol,
-  con las luces del auto o manual), abrir al dar contacto, límite de velocidad, apps predeterminadas.
-
-SE CONSERVA DE LA VERSIÓN ANTERIOR
-- Los km restantes e intervalos de aceite de motor y de caja, tu nombre, la foto del auto,
-  las apps elegidas para Mapas/Música/Radio y la señal de luces detectada.
-
-PANTALLAS DE CUALQUIER TAMAÑO
-- El diseño está hecho a 1280x720 y se escala solo para llenar la pantalla de la radio
-  (1024x600, 1280x720, 1920x720, etc.).
-
-Fuente: Barlow (licencia SIL OFL, ver FUENTE_BARLOW_LICENCIA.txt).
+PRÓXIMAS ETAPAS
+4. Mantenimiento completo con visor holográfico, Apps y Ajustes.
+5. Bienvenida, reemplazar la pantalla de inicio, abrir al dar contacto cuidando el reposo de la radio.

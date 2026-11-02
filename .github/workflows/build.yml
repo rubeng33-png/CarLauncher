@@ -36,27 +36,35 @@ jobs:
             || { echo "::error::La contraseña SIGNING_PASSWORD no es correcta."; exit 1; }
           echo "SIGNING_KEYSTORE=$KS" >> "$GITHUB_ENV"
 
-      - name: Build debug APK
+      - name: Build debug y release APK
         env:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug assembleRelease --no-daemon --stacktrace
 
       - name: Verificar firma
         run: |
-          APK=app/build/outputs/apk/debug/app-debug.apk
           SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
-          GOT=$("$SIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
           WANT=$(tr -d '[:space:]' < signing/sha256.txt)
-          echo "Firma del APK: $GOT"
-          [ "$GOT" = "$WANT" ] || { echo "::error::El APK no tiene la firma fija esperada."; exit 1; }
+          for APK in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk; do
+            GOT=$("$SIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+            echo "Firma de $APK: $GOT"
+            [ "$GOT" = "$WANT" ] || { echo "::error::$APK no tiene la firma fija esperada."; exit 1; }
+          done
 
       - name: Borrar clave descifrada
         if: always()
         run: rm -f "$RUNNER_TEMP/carlauncher-firma.p12"
 
-      - name: Upload APK
+      - name: Upload APK release (recomendado, arranca más rápido)
         uses: actions/upload-artifact@v7
         with:
-          name: CarLauncher13-debug-apk
+          name: CarLauncher3-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload APK debug
+        uses: actions/upload-artifact@v7
+        with:
+          name: CarLauncher3-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
