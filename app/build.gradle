@@ -12,8 +12,8 @@ android {
         applicationId 'com.rgservice.carlauncher3'
         minSdk 26          // la radio tiene Android 10 (API 29)
         targetSdk 33
-        versionCode 10
-        versionName '3.2.1'
+        versionCode 11
+        versionName '3.3'
     }
 
     // Firma fija: GitHub Actions descifra signing/carlauncher-firma.p12.enc y pasa la ruta y la

@@ -41,6 +41,14 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putInt("size", s.ordinal).apply()
     }
 
+    /** Qué va arriba a la derecha del inicio (Ajustes › Pantalla › Mantenimiento en el inicio). */
+    private val _maintStyle = MutableStateFlow(MaintStyle.entries[prefs.getInt("home_maint", 0).coerceIn(0, MaintStyle.entries.size - 1)])
+    val maintStyle: StateFlow<MaintStyle> = _maintStyle.asStateFlow()
+    fun setMaintStyle(m: MaintStyle) {
+        _maintStyle.value = m
+        prefs.edit().putInt("home_maint", m.ordinal).apply()
+    }
+
     fun setStats(on: Boolean) {
         _showStats.value = on
         prefs.edit().putBoolean("stats", on).apply()

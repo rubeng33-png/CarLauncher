@@ -56,6 +56,7 @@ class SettingsData(
     val version: String,
     val carPhoto: Boolean = false,
     val car: CarProfile = CarProfile(),
+    val maintStyle: Int = 0,
 )
 
 class SettingsActions(
@@ -82,6 +83,7 @@ class SettingsActions(
     val onCarText: (key: String, title: String, current: String) -> Unit = { _, _, _ -> },
     val onCarHolo: (Boolean) -> Unit = {},
     val onBluetooth: () -> Unit = {},
+    val onMaintStyle: (Int) -> Unit = {},
 )
 
 @Composable
@@ -95,6 +97,8 @@ fun SettingsScreen(d: SettingsData, a: SettingsActions) {
                 Group("Pantalla") {
                     Label("Tamaño de letras y botones")
                     Chips(UiSize.entries.map { it.label }, d.size.ordinal) { a.onSize(UiSize.entries[it]) }
+                    Label("Mantenimiento en el inicio (arriba a la derecha)", top = 18)
+                    Chips(listOf("Medidores", "Lista", "Urgente", "ZLink grande"), d.maintStyle) { a.onMaintStyle(it) }
                     Label("Modo noche", top = 18)
                     Chips(listOf("Automático (sol)", "Siempre noche", "Siempre día"), d.theme.ordinal) { a.onTheme(ThemeMode.entries[it]) }
                     Line()

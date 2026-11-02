@@ -22,6 +22,10 @@ import com.rgservice.carlauncher.data.Weather
 import com.rgservice.carlauncher.data.apps.AppsRepository
 import com.rgservice.carlauncher.ui.home.HomeActions
 import com.rgservice.carlauncher.ui.home.HomeScreen
+import com.rgservice.carlauncher.ui.home.MaintStyle
+import com.rgservice.carlauncher.data.maint.DateRow
+import com.rgservice.carlauncher.data.maint.KmRow
+import com.rgservice.carlauncher.data.maint.MaintSnapshot
 import com.rgservice.carlauncher.ui.pages.RightActions
 import com.rgservice.carlauncher.ui.pages.RightData
 import com.rgservice.carlauncher.ui.theme.CarLauncherTheme
@@ -63,7 +67,17 @@ class HomeScreenshotTest {
         playing = true, positionMs = 12_000, positionAt = 0, durationMs = 190_000, hasSession = true,
     )
 
-    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0) {
+    private val snap = MaintSnapshot(
+        odo = 123456,
+        km = listOf(
+            KmRow("oil", "Aceite motor", false, 3200, 5000, 126656, false),
+            KmRow("gear", "Aceite caja", false, 420, 40000, 123876, true),
+            KmRow("air", "Filtro de aire", false, 9000, 15000, 132456, false),
+        ),
+        dates = listOf(DateRow("ins", "Seguro", false, 0L, 45, false)),
+    )
+
+    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0, style: MaintStyle = MaintStyle.Gauges) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val car = CarLook()   // Toyota · New Corolla · 2001, foto de fábrica
         CarRepository.setForTest(car)
@@ -74,7 +88,7 @@ class HomeScreenshotTest {
         rule.mainClock.autoAdvance = false
         rule.setContent {
             CarLauncherTheme(dark = dark) {
-                DesignScale(size) { HomeScreen(state(dark), data, right, home, car) }
+                DesignScale(size) { HomeScreen(state(dark), data, right, home, car, style, snap) }
             }
         }
         rule.mainClock.advanceTimeBy(2500)
@@ -91,4 +105,9 @@ class HomeScreenshotTest {
     @Test fun claroGrande() = shot("4-claro-grande", false, UiSize.Grande)
     @Test fun oscuroMuyGrande() = shot("5-oscuro-muy-grande", true, UiSize.MuyGrande)
     @Test fun claroMuyGrande() = shot("6-claro-muy-grande", false, UiSize.MuyGrande)
+    @Test fun oscuroLista() = shot("7-oscuro-lista", true, UiSize.Normal, style = MaintStyle.List)
+    @Test fun claroUrgente() = shot("8-claro-urgente", false, UiSize.Normal, style = MaintStyle.Urgent)
+    @Test fun oscuroUrgente() = shot("9-oscuro-urgente", true, UiSize.Normal, style = MaintStyle.Urgent)
+    @Test fun oscuroZlink() = shot("10-oscuro-zlink-grande", true, UiSize.Normal, style = MaintStyle.App)
+    @Test fun oscuroListaMuyGrande() = shot("11-oscuro-lista-muy-grande", true, UiSize.MuyGrande, style = MaintStyle.List)
 }

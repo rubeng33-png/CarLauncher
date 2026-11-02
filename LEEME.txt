@@ -1,9 +1,17 @@
-CAR LAUNCHER 3 – versión 3.2 (Kotlin + Jetpack Compose)
+CAR LAUNCHER 3 – versión 3.3 (Kotlin + Jetpack Compose)
 ================================================================
 
 Launcher (pantalla de inicio) para la radio Android del auto: velocidad y viaje por GPS,
 clima, mantenimiento por km del tablero con visor holográfico, música, mapa, accesos a apps
 y ajustes. Diseño minimalista oscuro/claro pensado para una pantalla de 7" (1024x600).
+
+NOVEDADES 3.3
+- Mantenimiento más visible arriba a la derecha. Ajustes › Pantalla › "Mantenimiento en el inicio":
+  · Medidores: aceite motor y caja con medidor (tocar uno = editarlo).
+  · Lista: aceite motor, caja y el próximo vencimiento con barras.
+  · Urgente: lo más próximo a cambiar, con "Lo cambié hoy" (o "Cambiar fecha") y "Ver todo".
+  · ZLink grande: la tarjeta grande de la app principal, como antes.
+  Con las tres primeras, ZLink5 pasa a ser el primer mosaico (tocar abre, mantener elige la app).
 
 NOVEDADES 3.2
 - Inicio copiado del diseño de referencia del Corolla: fondo de estudio (noche con luces,

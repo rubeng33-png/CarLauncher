@@ -43,6 +43,7 @@ import com.rgservice.carlauncher.ui.home.HomeActions
 import com.rgservice.carlauncher.ui.home.HomeDialog
 import com.rgservice.carlauncher.ui.home.HomeDialogs
 import com.rgservice.carlauncher.ui.home.HomeScreen
+import com.rgservice.carlauncher.ui.home.MaintStyle
 import com.rgservice.carlauncher.ui.home.HomeViewModel
 import com.rgservice.carlauncher.ui.maint.MaintActions
 import com.rgservice.carlauncher.ui.maint.MaintScreen
@@ -125,6 +126,13 @@ class MainActivity : ComponentActivity() {
                 if (!vm.apps.start(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) toast("No se pudo abrir Bluetooth")
             },
             onCarImage = { dialog.value = HomeDialog.CarImage(night = false) },
+            onChangedNow = { id ->
+                if (vm.repo.maint.hasOdo()) {
+                    vm.repo.maint.changedNow(id)
+                    toast("Listo: próximo cambio a los ${vm.repo.maint.next(id)?.let { String.format(java.util.Locale.US, "%,d", it).replace(',', '.') }} km")
+                } else dialog.value = HomeDialog.Odometer(then = id)
+            },
+            onDateEdit = { id -> dialog.value = HomeDialog.DateEdit(id) },
         )
 
         val rightActions = RightActions(
@@ -204,6 +212,7 @@ class MainActivity : ComponentActivity() {
             onCarPhoto = { night -> dialog.value = HomeDialog.CarImage(night) },
             onCarText = { key, title, cur -> dialog.value = HomeDialog.CarText(key, title, cur) },
             onCarHolo = { on -> CarRepository.setHologram(this, on) },
+            onMaintStyle = { i -> vm.setMaintStyle(MaintStyle.entries[i]) },
             onBluetooth = {
                 if (!vm.apps.start(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) toast("No se pudo abrir Bluetooth")
             },
@@ -244,7 +253,9 @@ class MainActivity : ComponentActivity() {
                                         initialPage = initialPage, initialZoom = initialZoom,
                                     )
                                     val car by CarRepository.look.collectAsStateWithLifecycle()
-                                    HomeScreen(state, right, rightActions, actions, car)
+                                    val maintStyle by vm.maintStyle.collectAsStateWithLifecycle()
+                                    val maintSnap by vm.maint.collectAsStateWithLifecycle()
+                                    HomeScreen(state, right, rightActions, actions, car, maintStyle, maintSnap)
                                 }
                                 Screen.Maint -> {
                                     val m by vm.maint.collectAsStateWithLifecycle()
@@ -278,6 +289,7 @@ class MainActivity : ComponentActivity() {
                                             overlayOk = remember(tick) { Settings.canDrawOverlays(this@MainActivity) },
                                             carPhoto = carLook.profile.hasDayPhoto,
                                             car = carLook.profile,
+                                            maintStyle = vm.maintStyle.collectAsStateWithLifecycle().value.ordinal,
                                         ),
                                         settingsActions,
                                     )
