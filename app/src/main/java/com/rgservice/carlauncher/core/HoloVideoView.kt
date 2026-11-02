@@ -29,8 +29,8 @@ class HoloVideoView @JvmOverloads constructor(ctx: Context, attrs: AttributeSet?
      * encima y se ve solo el holograma brillante.
      */
     fun blendWithBackground() {
-        val k = 1.25f
-        val off = -0.20f * 255f
+        val k = 1.35f
+        val off = -0.27f * 255f
         val m = android.graphics.ColorMatrix(floatArrayOf(
             k, 0f, 0f, 0f, off,
             0f, k, 0f, 0f, off,
