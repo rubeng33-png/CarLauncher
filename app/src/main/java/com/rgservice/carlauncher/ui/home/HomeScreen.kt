@@ -374,6 +374,7 @@ private fun hasTransparency(img: ImageBitmap): Boolean = try {
 /** Copia de la foto con los cuatro bordes desvanecidos (para que se funda con el panel). */
 private fun featherEdges(src: ImageBitmap): ImageBitmap = try {
     val b = src.asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, true)
+    b.setHasAlpha(true)   // un JPG viene marcado "sin transparencia": sin esto los bordes se ven blancos
     val cv = android.graphics.Canvas(b)
     val w = b.width.toFloat(); val h = b.height.toFloat()
     val black = android.graphics.Color.BLACK
