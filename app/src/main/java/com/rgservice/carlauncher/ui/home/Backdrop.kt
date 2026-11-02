@@ -159,14 +159,18 @@ private fun DrawScope.drawCity(city: City, dark: Boolean) {
         Triple(0.40f, 9f, Color(0xFF8C6BFF)),
     ).forEach { (dx, wpx, col) ->
         val x = cx + carW * dx
-        val w = wpx * u * 1.6f
-        drawRect(
-            Brush.verticalGradient(
-                listOf(col.copy(alpha = if (dark) 0.50f else 0.32f), Color.Transparent),
-                startY = h + 2 * u, endY = h + floorH * 0.85f,
-            ),
-            topLeft = Offset(x - w / 2f, h + 2 * u), size = Size(w, floorH * 0.85f), blendMode = glow,
-        )
+        val len = floorH * 0.75f
+        // Franja difusa: tres capas superpuestas, de ancha y tenue a angosta y más intensa
+        listOf(3.2f to 0.22f, 1.8f to 0.40f, 0.8f to 0.75f).forEach { (k, a) ->
+            val w = wpx * u * k
+            drawRect(
+                Brush.verticalGradient(
+                    listOf(col.copy(alpha = (if (dark) 0.50f else 0.32f) * a), Color.Transparent),
+                    startY = h + 2 * u, endY = h + 2 * u + len,
+                ),
+                topLeft = Offset(x - w / 2f, h + 2 * u), size = Size(w, len), blendMode = glow,
+            )
+        }
     }
 
     // Sombra debajo del auto
