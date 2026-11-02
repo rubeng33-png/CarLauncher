@@ -14,57 +14,39 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * Foto propia del auto (elegida de la galería). Se guarda una copia dentro de la app,
- * achicada y ya derecha, para no depender del archivo original ni de permisos.
+ * Foto propia del auto (elegida de la galería). Se guarda una copia exacta dentro de la app
+ * (mismas dimensiones que el original) para no depender del archivo original ni de permisos.
  * Sin foto: holograma en modo noche y modelo 3D en modo día.
  */
 object CarPhoto {
-    private const val MAX_SIDE = 1280
+    /** Solo para mostrar: arriba de esto se lee más liviano (la pantalla es de 1024x600). */
+    private const val SHOW_MAX_SIDE = 2560
 
     private val _photo = MutableStateFlow<Bitmap?>(null)
     val photo: StateFlow<Bitmap?> = _photo.asStateFlow()
     private var loaded = false
 
-    private fun file(ctx: Context) = File(ctx.filesDir, "auto.jpg")
+    /** Copia exacta de la foto elegida (mismo tamaño y calidad que el original). */
+    private fun file(ctx: Context) = File(ctx.filesDir, "auto_foto")
 
     suspend fun load(ctx: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
         loaded = true
         val f = file(ctx)
-        if (f.exists()) _photo.value = try { BitmapFactory.decodeFile(f.absolutePath) } catch (e: Throwable) { null }
+        if (f.exists()) _photo.value = decode(f)
     }
 
-    /** Copia la imagen elegida. Devuelve false si no se pudo leer. */
+    /** Guarda la foto elegida tal cual (sin achicarla ni recomprimirla). false si no es una imagen. */
     suspend fun save(ctx: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
-            val cr = ctx.contentResolver
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return@withContext false
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext false
-            var sample = 1
-            while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_SIDE) sample *= 2
-            var bmp = cr.openInputStream(uri)?.use {
-                BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-            } ?: return@withContext false
-
-            // Las fotos del celular suelen venir "acostadas": se enderezan según el EXIF
-            val rotation = try {
-                cr.openInputStream(uri)?.use {
-                    when (ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                        ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                        ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                        ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                        else -> 0f
-                    }
-                } ?: 0f
-            } catch (e: Exception) { 0f }
-            if (rotation != 0f) {
-                bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation) }, true)
-            }
-            val scale = MAX_SIDE.toFloat() / maxOf(bmp.width, bmp.height)
-            if (scale < 1f) bmp = Bitmap.createScaledBitmap(bmp, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), true)
-
-            file(ctx).outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            val tmp = File(ctx.filesDir, "auto_foto.tmp")
+            ctx.contentResolver.openInputStream(uri)?.use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                ?: return@withContext false
+            val bmp = decode(tmp)
+            if (bmp == null) { tmp.delete(); return@withContext false }
+            val f = file(ctx)
+            f.delete()
+            if (!tmp.renameTo(f)) { tmp.copyTo(f, overwrite = true); tmp.delete() }
             _photo.value = bmp
             loaded = true
             true
@@ -73,12 +55,35 @@ object CarPhoto {
         }
     }
 
+    /** Lee la foto para mostrarla, derecha según el EXIF (las del celular suelen venir acostadas). */
+    private fun decode(f: File): Bitmap? = try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(f.absolutePath, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) null
+        else {
+            var sample = 1
+            while (maxOf(bounds.outWidth, bounds.outHeight) / sample > SHOW_MAX_SIDE) sample *= 2
+            val bmp = BitmapFactory.decodeFile(f.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+            val rotation = try {
+                when (ExifInterface(f.absolutePath).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+            } catch (e: Exception) { 0f }
+            if (bmp != null && rotation != 0f) Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation) }, true)
+            else bmp
+        }
+    } catch (e: Throwable) { null }
+
     /** Solo para las capturas de prueba. */
     internal fun setForTest(b: Bitmap?) { _photo.value = b; loaded = true }
 
     /** Vuelve al modelo 3D / holograma. */
     suspend fun clear(ctx: Context) = withContext(Dispatchers.IO) {
         try { file(ctx).delete() } catch (e: Exception) { }
+        try { File(ctx.filesDir, "auto.jpg").delete() } catch (e: Exception) { }
         _photo.value = null
     }
 }

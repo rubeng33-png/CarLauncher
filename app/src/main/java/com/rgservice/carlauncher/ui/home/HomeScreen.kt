@@ -144,23 +144,19 @@ private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryC
                 Clock(onLongPress = actions.onToggleStats, size = if (compact) 64 else 78, modifier = Modifier.weight(1f))
                 Greeting(s, actions, compact)
             }
-            // Centro: el auto y, al costado, el mantenimiento
-            Row(
-                Modifier.weight(1f).fillMaxWidth().padding(vertical = if (compact) 8.dp else 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // Centro: el auto grande, a todo el ancho (como en el diseño).
+            // En "Muy grande" no entra el auto: ahí va el mantenimiento.
+            Box(
+                Modifier.weight(1f).fillMaxWidth().padding(vertical = if (compact) 6.dp else 10.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                if (!veryCompact) {
-                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        CarStage()
-                        // Mantener apretado el auto: elegir la imagen (foto de la galería o modelo 3D)
-                        Box(Modifier.matchParentSize().pointerInput(Unit) { detectTapGestures(onLongPress = { actions.onCarImage() }) })
-                    }
-                    Spacer(Modifier.width(14.dp))
+                if (veryCompact) {
+                    MaintPanel(s, actions, compact, Modifier.fillMaxSize())
+                } else {
+                    CarStage()
+                    // Mantener apretado el auto: elegir la imagen (foto de la galería o modelo 3D)
+                    Box(Modifier.matchParentSize().pointerInput(Unit) { detectTapGestures(onLongPress = { actions.onCarImage() }) })
                 }
-                MaintPanel(
-                    s, actions, compact,
-                    if (veryCompact) Modifier.weight(1f).fillMaxHeight() else Modifier.width(if (compact) 214.dp else 236.dp).fillMaxHeight(),
-                )
             }
             // Abajo: velocidad y barra de velocidad con el viaje
             Row(Modifier.fillMaxWidth().height(if (compact) 104.dp else 118.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -250,10 +246,7 @@ private fun CarPicture(modifier: Modifier) {
     val bmp = photo
     if (bmp != null) {
         val img = remember(bmp) { bmp.asImageBitmap() }
-        Image(
-            img, contentDescription = "Tu auto", contentScale = ContentScale.Crop,
-            modifier = modifier.clip(RoundedCornerShape(20.dp)),
-        )
+        Image(img, contentDescription = "Tu auto", contentScale = ContentScale.Fit, modifier = modifier)
     } else if (c.isDark) {
         AndroidView(
             factory = { ctx -> HoloVideoView(ctx).apply { play(0, R.raw.holo_home) } },
@@ -302,7 +295,7 @@ private fun MaintPanel(s: HomeState, actions: HomeActions, compact: Boolean, mod
 }
 
 @Composable
-private fun MaintRow(g: Gauge, ring: Dp, onClick: () -> Unit) {
+private fun MaintRow(g: Gauge, ring: Dp, small: Boolean = false, onClick: () -> Unit) {
     val c = CarTheme.colors
     val color = if (g.warn) c.warn else c.accent
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
@@ -316,8 +309,8 @@ private fun MaintRow(g: Gauge, ring: Dp, onClick: () -> Unit) {
             )
         }
         Column(Modifier.weight(1f).padding(start = 8.dp)) {
-            Txt(g.name, 17, weight = FontWeight.SemiBold)
-            Txt(if (g.configured) "km restantes" else "", 13, c.muted)
+            Txt(g.name, if (small) 16 else 17, weight = FontWeight.SemiBold)
+            if (!small) Txt(if (g.configured) "km restantes" else "", 13, c.muted)
             val sub = when {
                 !g.configured -> "Tocá para configurar"
                 g.remainingKm == 0 -> "¡Cambiar ahora!"
@@ -475,7 +468,38 @@ private fun RightColumn(
             AllAppsRow(actions.onApps, Modifier.weight(1f).fillMaxHeight())
             SquareButton(R.drawable.ic_settings, "Ajustes", actions.onSettings, Modifier.aspectRatio(1f).fillMaxHeight())
         }
+        if (!veryCompact) MaintCard(s, actions, compact, Modifier.fillMaxWidth().height(if (compact) 104.dp else 118.dp))
         RightCard(right, rightActions, small = compact, modifier = Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+/** Mantenimiento en la columna derecha: km del tablero, los dos medidores y "Ver todo". */
+@Composable
+private fun MaintCard(s: HomeState, actions: HomeActions, compact: Boolean, modifier: Modifier) {
+    val c = CarTheme.colors
+    CarCard(modifier, radius = 24.dp, padding = PaddingValues(start = 16.dp, end = 10.dp, top = 6.dp, bottom = 8.dp), brush = cardBrush()) {
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Txt(
+                    if (s.odoKm != null) "Mantenimiento · ${s.odoKm.fmtKm()} km" else "Mantenimiento · cargar km",
+                    15, if (s.odoKm != null) c.muted else c.accent, FontWeight.Medium, tabular = true,
+                    modifier = Modifier.weight(1f).clickable(onClick = actions.onOdometer).padding(vertical = 4.dp),
+                )
+                val col = if (s.maintWarnings > 0) c.warn else c.accent
+                Row(
+                    Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = actions.onMaint).padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Txt(if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 15, col, FontWeight.SemiBold)
+                    LineIcon(R.drawable.ic_chevron, 16.dp, col)
+                }
+            }
+            Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { MaintRow(s.oil, if (compact) 64.dp else 74.dp, small = true) { actions.onGauge(s.oil.id) } }
+                Hairline(Modifier.width(1.dp).fillMaxHeight(0.7f))
+                Box(Modifier.weight(1f).padding(start = 10.dp)) { MaintRow(s.gear, if (compact) 64.dp else 74.dp, small = true) { actions.onGauge(s.gear.id) } }
+            }
+        }
     }
 }
 
