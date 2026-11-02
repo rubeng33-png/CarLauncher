@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.rgservice.carlauncher.core.DesignScale
 import com.rgservice.carlauncher.core.UiSize
 import com.rgservice.carlauncher.data.Gauge
@@ -30,6 +32,7 @@ import org.robolectric.annotation.GraphicsMode
  * Capturas de la pantalla de inicio con datos de ejemplo (solo para revisar el diseño).
  * Pantalla de la radio: 1024x600. Se generan en app/build/capturas/.
  */
+@OptIn(ExperimentalRoborazziApi::class)
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [33], qualifiers = "w1024dp-h600dp-land-mdpi")
@@ -65,7 +68,14 @@ class HomeScreenshotTest {
             }
         }
         rule.mainClock.advanceTimeBy(2500)
-        rule.onRoot().captureRoboImage("build/capturas/$name.png")
+        val file = "build/capturas/$name.png"
+        try {
+            rule.onRoot().captureRoboImage(file)
+        } catch (e: IllegalArgumentException) {
+            // El video del holograma (TextureView) no se puede dibujar en la captura de la vista:
+            // se usa la captura de pantalla completa (el video queda vacío).
+            captureScreenRoboImage(file)
+        }
     }
 
     @Test fun oscuroNormal() = shot("1-oscuro-normal", true, UiSize.Normal)
