@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
@@ -348,30 +349,17 @@ private fun CarStage(car: CarLook, dark: Boolean, reflection: Boolean, actions: 
                 onRelease = { it.stop() },
             )
         } else {
-            val fade = remember(img) { !hasTransparency(img) }   // foto con fondo: se funde en los bordes
+            // Foto con fondo: bordes difuminados. Reflejo: imagen dada vuelta y desvanecida.
+            // Se preparan una sola vez por imagen (dibujo de Android, sin capas ni mezclas en cada cuadro).
+            val shown = remember(img) { if (hasTransparency(img)) img else featherEdges(img) }
             if (dark && reflection) {
+                val refl = remember(shown) { reflectionOf(shown) }
                 Image(
-                    img, contentDescription = null, contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.size(w, h).graphicsLayer {
-                        transformOrigin = TransformOrigin(0.5f, 1f)
-                        scaleY = -0.45f
-                        alpha = 0.25f
-                        compositingStrategy = CompositingStrategy.Offscreen
-                    }.drawWithContent {
-                        drawContent()
-                        if (fade) edgeMask()
-                        drawRect(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black), blendMode = BlendMode.DstIn)
-                    },
+                    refl, contentDescription = null, contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(w, h * 0.45f).offset(y = h * 0.5f + h * 0.225f - h * 0.03f),
                 )
             }
-            Image(
-                img, contentDescription = "Tu auto", contentScale = ContentScale.FillBounds,
-                modifier = Modifier.size(w, h).then(
-                    if (fade) Modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                        .drawWithContent { drawContent(); edgeMask() }
-                    else Modifier,
-                ),
-            )
+            Image(shown, contentDescription = "Tu auto", contentScale = ContentScale.FillBounds, modifier = Modifier.size(w, h))
         }
     }
 }
@@ -383,17 +371,38 @@ private fun hasTransparency(img: ImageBitmap): Boolean = try {
         .any { (x, y) -> (b.getPixel(x, y) ushr 24) < 200 }
 } catch (e: Exception) { false }
 
-/** Desvanece los cuatro bordes de una foto con fondo, para que se funda con el panel. */
-private fun DrawScope.edgeMask() {
-    drawRect(
-        Brush.horizontalGradient(0f to Color.Transparent, 0.16f to Color.Black, 0.84f to Color.Black, 1f to Color.Transparent),
-        blendMode = BlendMode.DstIn,
-    )
-    drawRect(
-        Brush.verticalGradient(0f to Color.Transparent, 0.18f to Color.Black, 0.80f to Color.Black, 1f to Color.Transparent),
-        blendMode = BlendMode.DstIn,
-    )
-}
+/** Copia de la foto con los cuatro bordes desvanecidos (para que se funda con el panel). */
+private fun featherEdges(src: ImageBitmap): ImageBitmap = try {
+    val b = src.asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, true)
+    val cv = android.graphics.Canvas(b)
+    val w = b.width.toFloat(); val h = b.height.toFloat()
+    val black = android.graphics.Color.BLACK
+    val p = android.graphics.Paint().apply { xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN) }
+    p.shader = android.graphics.LinearGradient(0f, 0f, w, 0f, intArrayOf(0, black, black, 0), floatArrayOf(0f, 0.16f, 0.84f, 1f), android.graphics.Shader.TileMode.CLAMP)
+    cv.drawRect(0f, 0f, w, h, p)
+    p.shader = android.graphics.LinearGradient(0f, 0f, 0f, h, intArrayOf(0, black, black, 0), floatArrayOf(0f, 0.18f, 0.80f, 1f), android.graphics.Shader.TileMode.CLAMP)
+    cv.drawRect(0f, 0f, w, h, p)
+    b.asImageBitmap()
+} catch (e: Throwable) { src }
+
+/** Reflejo en el piso: la imagen dada vuelta, achatada (45 %), al 25 % y desvanecida hacia abajo. */
+private fun reflectionOf(src: ImageBitmap): ImageBitmap = try {
+    val s = src.asAndroidBitmap()
+    val rh = (s.height * 0.45f).toInt().coerceAtLeast(1)
+    val out = android.graphics.Bitmap.createBitmap(s.width, rh, android.graphics.Bitmap.Config.ARGB_8888)
+    val cv = android.graphics.Canvas(out)
+    cv.save()
+    cv.translate(0f, rh.toFloat())
+    cv.scale(1f, -rh.toFloat() / s.height)
+    cv.drawBitmap(s, 0f, 0f, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { alpha = 64 })
+    cv.restore()
+    val p = android.graphics.Paint().apply {
+        xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN)
+        shader = android.graphics.LinearGradient(0f, 0f, 0f, rh.toFloat(), android.graphics.Color.BLACK, 0, android.graphics.Shader.TileMode.CLAMP)
+    }
+    cv.drawRect(0f, 0f, s.width.toFloat(), rh.toFloat(), p)
+    out.asImageBitmap()
+} catch (e: Throwable) { src }
 
 /** Óvalo con degradé radial (luz o sombra suave). */
 private fun DrawScope.softOval(center: Offset, rx: Float, ry: Float, color: Color, mode: BlendMode) {
