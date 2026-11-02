@@ -39,7 +39,14 @@ jobs:
       - name: Build debug y release APK
         env:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle assembleDebug assembleRelease --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle assembleDebug assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log" || {
+            # Copia los errores como avisos para verlos sin abrir el log completo
+            grep -E '^e: |error:|ERROR:|What went wrong|> .*(failed|Could not|Unresolved|not found)' "$RUNNER_TEMP/gradle.log" \
+              | head -40 | while IFS= read -r l; do echo "::error::${l//%/%25}"; done
+            exit 1
+          }
 
       - name: Verificar firma
         run: |
