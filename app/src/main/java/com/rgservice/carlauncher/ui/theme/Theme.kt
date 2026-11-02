@@ -88,6 +88,14 @@ val Barlow = FontFamily(
     Font(R.font.barlow_bold, FontWeight.Bold),
 )
 
+/** Tipografía de la pantalla de inicio (igual a la del diseño de referencia). */
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
+)
+
 val LocalCarColors = staticCompositionLocalOf { DarkColors }
 
 /** Acceso corto a los colores: CarTheme.colors.accent */

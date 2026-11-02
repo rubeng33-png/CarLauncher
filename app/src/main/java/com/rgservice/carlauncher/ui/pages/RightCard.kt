@@ -299,9 +299,9 @@ internal fun Equalizer(playing: Boolean, modifier: Modifier) {
     }
 }
 
-internal fun mmss(ms: Long): String {
+internal fun mmss(ms: Long, minDigits: Int = 1): String {
     val s = (ms / 1000).coerceAtLeast(0)
-    return "${s / 60}:${String.format(Locale.US, "%02d", s % 60)}"
+    return "${(s / 60).toString().padStart(minDigits, '0')}:${String.format(Locale.US, "%02d", s % 60)}"
 }
 
 /* ------------------------------------------------------------------ Mapa */

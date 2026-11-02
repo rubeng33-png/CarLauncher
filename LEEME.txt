@@ -1,9 +1,15 @@
-CAR LAUNCHER 3 – versión 3.1 (Kotlin + Jetpack Compose)
+CAR LAUNCHER 3 – versión 3.2 (Kotlin + Jetpack Compose)
 ================================================================
 
 Launcher (pantalla de inicio) para la radio Android del auto: velocidad y viaje por GPS,
 clima, mantenimiento por km del tablero con visor holográfico, música, mapa, accesos a apps
 y ajustes. Diseño minimalista oscuro/claro pensado para una pantalla de 7" (1024x600).
+
+NOVEDADES 3.2
+- Inicio copiado del diseño de referencia del Corolla: fondo de estudio (noche con luces,
+  día claro), el auto apoyado en el piso, tipografía Inter, tarjetas de la derecha iguales.
+- Foto de fábrica: Toyota Corolla plateado recortado. Se sigue cambiando en Ajustes › Mi auto.
+- Bolitas arriba al centro: Auto / Mapa (también deslizando).
 
 NOVEDADES 3.1 (rediseño "luces encendidas / apagadas")
 - Inicio en un solo panel: zona del auto (~70 %) y columna derecha (~30 %).

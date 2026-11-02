@@ -59,8 +59,8 @@ class HomeScreenshotTest {
     )
 
     private val media = Media(
-        source = "Bluetooth", title = "Vivir mi vida", artist = "Marc Anthony",
-        playing = true, positionMs = 12_000, positionAt = 0, durationMs = 239_000, hasSession = true,
+        source = "BT Music", title = "Vivir mi vida", artist = "Marc Anthony",
+        playing = true, positionMs = 12_000, positionAt = 0, durationMs = 190_000, hasSession = true,
     )
 
     private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0) {

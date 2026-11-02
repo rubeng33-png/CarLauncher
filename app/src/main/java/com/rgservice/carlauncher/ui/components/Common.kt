@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +62,7 @@ fun Txt(
     tabular: Boolean = false,
     lineHeight: Float = 1.15f,
     letterSpacing: Float = 0f,
+    family: FontFamily = Barlow,
 ) {
     Text(
         text = text,
@@ -70,7 +72,7 @@ fun Txt(
         overflow = TextOverflow.Ellipsis,
         textAlign = align,
         style = TextStyle(
-            fontFamily = Barlow,
+            fontFamily = family,
             fontWeight = weight,
             fontSize = size.sp,
             lineHeight = (size * lineHeight).sp,
