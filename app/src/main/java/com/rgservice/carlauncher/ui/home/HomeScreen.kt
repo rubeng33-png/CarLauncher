@@ -49,6 +49,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.foundation.layout.offset
@@ -137,8 +146,15 @@ fun HomeScreen(state: HomeState, right: RightData, rightActions: RightActions, a
 
 @Composable
 private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryCompact: Boolean, modifier: Modifier) {
-    CarCard(modifier, radius = 30.dp, padding = PaddingValues(26.dp), brush = cardBrush()) {
-        Column(Modifier.fillMaxSize()) {
+    // Lugar del auto dentro de la tarjeta, para dibujar el fondo de estudio detrás
+    var stage by remember { mutableStateOf<Rect?>(null) }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    CarCard(modifier, radius = 30.dp, padding = PaddingValues(0.dp), brush = cardBrush()) {
+        StudioBackdrop(
+            if (veryCompact) null else stage?.translate(-origin),
+            Modifier.matchParentSize().onGloballyPositioned { origin = it.positionInRoot() },
+        )
+        Column(Modifier.fillMaxSize().padding(26.dp)) {
             // Arriba: hora y fecha a la izquierda; saludo, clima y modo noche a la derecha
             Row(Modifier.fillMaxWidth()) {
                 Clock(onLongPress = actions.onToggleStats, size = if (compact) 64 else 78, modifier = Modifier.weight(1f))
@@ -147,7 +163,8 @@ private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryC
             // Centro: el auto grande, a todo el ancho (como en el diseño).
             // En "Muy grande" no entra el auto: ahí va el mantenimiento.
             Box(
-                Modifier.weight(1f).fillMaxWidth().padding(vertical = if (compact) 6.dp else 10.dp),
+                Modifier.weight(1f).fillMaxWidth().padding(vertical = if (compact) 6.dp else 10.dp)
+                    .onGloballyPositioned { stage = it.boundsInRoot() },
                 contentAlignment = Alignment.Center,
             ) {
                 if (veryCompact) {
@@ -218,20 +235,9 @@ private fun ThemeChip(s: HomeState, onClick: () -> Unit, modifier: Modifier) {
 /** El auto sobre un "piso" iluminado, como en el diseño. */
 @Composable
 private fun CarStage() {
-    val c = CarTheme.colors
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        val w = minOf(maxWidth, maxHeight * (316f / 178f))
-        // Luz del piso: un óvalo achatado debajo de las ruedas
-        val floor = c.accent.copy(alpha = if (c.isDark) 0.34f else 0.18f)
-        Box(
-            Modifier.align(Alignment.Center).offset(y = w * 0.21f).width(w).height(w * 0.14f)
-                .drawBehind {
-                    scale(1f, size.height / size.width) {
-                        drawCircle(Brush.radialGradient(listOf(floor, Color.Transparent), center, size.width / 2f), size.width / 2f, center)
-                    }
-                },
-        )
-        CarPicture(Modifier.width(w).aspectRatio(316f / 178f))
+        val w = minOf(maxWidth, maxHeight * CAR_RATIO)
+        CarPicture(Modifier.width(w).aspectRatio(CAR_RATIO), reflectionGap = w / CAR_RATIO)
     }
 }
 
@@ -240,13 +246,16 @@ private fun CarStage() {
  * Sin foto: holograma en video en tema oscuro (lo decodifica el hardware) e imagen fija en tema claro.
  */
 @Composable
-private fun CarPicture(modifier: Modifier) {
+private fun CarPicture(modifier: Modifier, reflectionGap: Dp) {
     val c = CarTheme.colors
     val photo by CarPhoto.photo.collectAsStateWithLifecycle()
     val bmp = photo
     if (bmp != null) {
         val img = remember(bmp) { bmp.asImageBitmap() }
-        Image(img, contentDescription = "Tu auto", contentScale = ContentScale.Fit, modifier = modifier)
+        Box(contentAlignment = Alignment.Center) {
+            Reflection(reflectionGap, modifier) { m -> Image(img, contentDescription = null, contentScale = ContentScale.Fit, modifier = m) }
+            Image(img, contentDescription = "Tu auto", contentScale = ContentScale.Fit, modifier = modifier)
+        }
     } else if (c.isDark) {
         AndroidView(
             factory = { ctx -> HoloVideoView(ctx).apply { play(0, R.raw.holo_home) } },
@@ -254,13 +263,42 @@ private fun CarPicture(modifier: Modifier) {
             onRelease = { it.stop() },
         )
     } else {
-        Image(
-            painter = painterResource(R.drawable.auto3d),
-            contentDescription = "Tu auto",
-            contentScale = ContentScale.Fit,
-            modifier = modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-        )
+        val painter = painterResource(R.drawable.auto3d)
+        Box(contentAlignment = Alignment.Center) {
+            Reflection(reflectionGap, modifier) { m ->
+                Image(painter, contentDescription = null, contentScale = ContentScale.Fit, modifier = m.padding(horizontal = 8.dp, vertical = 10.dp))
+            }
+            Image(
+                painter = painter,
+                contentDescription = "Tu auto",
+                contentScale = ContentScale.Fit,
+                modifier = modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            )
+        }
     }
+}
+
+/** Reflejo del auto en el piso brillante: la imagen dada vuelta, que se desvanece hacia abajo. */
+@Composable
+private fun Reflection(height: Dp, modifier: Modifier, content: @Composable (Modifier) -> Unit) {
+    val c = CarTheme.colors
+    content(
+        modifier
+            .offset(y = height * 0.86f)
+            .graphicsLayer {
+                scaleY = -1f
+                alpha = if (c.isDark) 0.30f else 0.22f
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+            .drawWithContent {
+                drawContent()
+                // Dibujado antes de dar vuelta: abajo (las ruedas) visible, arriba transparente
+                drawRect(
+                    Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black),
+                    blendMode = BlendMode.DstIn,
+                )
+            },
+    )
 }
 
 /* ------------------------------------------------------------------ Mantenimiento (al costado del auto) */
