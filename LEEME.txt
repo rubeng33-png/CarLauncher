@@ -1,17 +1,32 @@
-CAR LAUNCHER 3 – versión 3.0-etapa5.1 (Kotlin + Jetpack Compose)
+CAR LAUNCHER 3 – versión 3.1 (Kotlin + Jetpack Compose)
 ================================================================
 
 Launcher (pantalla de inicio) para la radio Android del auto: velocidad y viaje por GPS,
 clima, mantenimiento por km del tablero con visor holográfico, música, mapa, accesos a apps
 y ajustes. Diseño minimalista oscuro/claro pensado para una pantalla de 7" (1024x600).
 
-NOVEDADES 3.0-etapa5.1
-- Nuevo diseño del inicio (tarjeta grande con la hora, el auto grande, la velocidad y el viaje;
-  columna derecha con Mapas, accesos rápidos, Todas las apps, Ajustes, Mantenimiento y
-  Música/Mapa/Accesos). En "Muy grande" el mantenimiento ocupa el lugar del auto.
-- Imagen del auto: mantener apretado el auto en el inicio, o Ajustes › Auto › "Imagen del auto".
-  "Elegir de la galería" usa una foto tuya, que se ve completa de día y de noche (en lugar
-  del holograma). Se guarda una copia exacta, sin achicar. "Volver al modelo 3D" deja el holograma de noche y el modelo 3D de día.
+NOVEDADES 3.1 (rediseño "luces encendidas / apagadas")
+- Inicio en un solo panel: zona del auto (~70 %) y columna derecha (~30 %).
+  · Arriba: hora y fecha (+ clima), marca / modelo / año, "Luces encendidas/apagadas"
+    (= modo noche; tocar cambia) y la píldora de mantenimiento (tocar = Mantenimiento).
+  · Centro: el auto. Tocarlo abre Mantenimiento; mantenerlo apretado, la foto.
+    Deslizar de costado (o las bolitas) muestra el mapa. El giro de Maps/Waze va arriba.
+  · Abajo: velocidad (tocar = aviso), barra 0·60·100·160 y "Viaje …" (tocar = poner en cero).
+  · Derecha: app principal (p. ej. ZLink5), BT Music / Radio / Ecualizador (tocar abre,
+    mantener elige la app), Todas las apps, Ajustes (engranaje) y el mini reproductor.
+- Ajustes › Mi auto: foto de día, foto de noche (opcional), marca, modelo, año y
+  "Mostrar holograma en lugar de la foto". La foto de fábrica es la del Toyota New Corolla.
+- Accesos (6 favoritas): ahora arriba en la pantalla Apps. Bluetooth: Ajustes › Permisos y sistema.
+
+PRUEBAS NUEVAS (3.1)
+  L1. Oscuro y claro parecidos a la imagen de referencia (foto de la radio lado a lado).
+  L2. Normal / Grande / Muy grande: nada encimado ni cortado.
+  L3. Cambiar la foto de día con un PNG sin fondo y con un JPG común; reiniciar: sigue la elegida.
+      "Usar la de fábrica" vuelve al Corolla. Foto de noche: se usa solo con tema oscuro.
+  L4. Marca / modelo / año: se editan; vacíos, no se muestran.
+  L5. App principal, BT Music, Radio y Ecualizador: la primera vez piden la app; después la abren.
+  L6. Tocar el auto abre Mantenimiento; deslizar muestra el mapa (Casa / Trabajo / zoom).
+  L7. Recuadro de prueba: 50–60 fps en el inicio y memoria parecida a la de antes.
 
 Este archivo sirve para quien compile y pruebe. Al final hay una sección para el asistente
 (Claude u otro) que ayude a compilar, corregir y guiar las pruebas.
