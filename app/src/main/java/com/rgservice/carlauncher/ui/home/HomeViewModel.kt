@@ -8,6 +8,7 @@ import com.rgservice.carlauncher.data.CarRepository
 import com.rgservice.carlauncher.data.HomeState
 import com.rgservice.carlauncher.data.Media
 import com.rgservice.carlauncher.data.apps.AppsRepository
+import com.rgservice.carlauncher.data.maint.MaintSnapshot
 import com.rgservice.carlauncher.data.media.MediaRepository
 import com.rgservice.carlauncher.data.Prefs
 import com.rgservice.carlauncher.data.ThemeMode
@@ -29,6 +30,29 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val media: StateFlow<Media> = music.updates()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Media(hasPermission = music.hasPermission()))
 
+    val maint: StateFlow<MaintSnapshot> = repo.maintenance()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MaintSnapshot())
+
+    /** Último ítem elegido en Mantenimiento ("km:oil", "date:ins"…). */
+    var maintSel: String? = null
+
+    fun setSize(s: UiSize) {
+        _size.value = s
+        prefs.edit().putInt("size", s.ordinal).apply()
+    }
+
+    fun setStats(on: Boolean) {
+        _showStats.value = on
+        prefs.edit().putBoolean("stats", on).apply()
+    }
+
+    var welcomeOn: Boolean
+        get() = prefs.getBoolean("welcome", true)
+        set(v) { prefs.edit().putBoolean("welcome", v).apply() }
+    var ignitionOpen: Boolean
+        get() = prefs.getBoolean("ignOpen", true)
+        set(v) { prefs.edit().putBoolean("ignOpen", v).apply() }
+
     val initialPage: Int get() = prefs.getInt("page", 0)
     val mapZoom: Int get() = prefs.getInt("mapZoom", 16)
     fun savePage(p: Int) = prefs.edit().putInt("page", p).apply()
@@ -37,7 +61,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun lastLon() = Prefs.lon(prefs)
 
     private val _size = MutableStateFlow(UiSize.entries[prefs.getInt("size", 0).coerceIn(0, UiSize.entries.size - 1)])
-    private val _showStats = MutableStateFlow(prefs.getBoolean("stats", true))
+    private val _showStats = MutableStateFlow(prefs.getBoolean("stats", false))
 
     val size: StateFlow<UiSize> = _size.asStateFlow()
     val showStats: StateFlow<Boolean> = _showStats.asStateFlow()

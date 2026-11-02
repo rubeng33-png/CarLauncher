@@ -88,6 +88,7 @@ class RightActions(
     val onPrevious: () -> Unit,
     val onOpenMusic: () -> Unit,
     val onMusicPermission: () -> Unit,
+    val onMusicDiag: () -> Unit,
     val onOpenMaps: () -> Unit,
     val onNavBanner: (NavInfo) -> Unit,
     val onDest: (key: String, name: String) -> Unit,
@@ -147,6 +148,7 @@ fun RightCard(d: RightData, a: RightActions, small: Boolean, modifier: Modifier)
 
 /* ------------------------------------------------------------------ Música */
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MusicPage(m: Media, small: Boolean, a: RightActions) {
     val c = CarTheme.colors
@@ -164,7 +166,7 @@ private fun MusicPage(m: Media, small: Boolean, a: RightActions) {
         Box(
             Modifier.size(art).clip(RoundedCornerShape(24.dp))
                 .background(Brush.linearGradient(listOf(Color(0xFF3D7BD9), Color(0xFF101826))))
-                .clickable(onClick = a.onOpenMusic),
+                .combinedClickable(onClick = a.onOpenMusic, onLongClick = a.onMusicDiag),
             contentAlignment = Alignment.BottomStart,
         ) {
             val bmp = m.art

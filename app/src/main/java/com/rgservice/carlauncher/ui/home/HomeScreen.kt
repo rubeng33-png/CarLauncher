@@ -75,7 +75,9 @@ import java.util.Locale
 /** Acciones que dispara la pantalla de inicio (las resuelve MainActivity). */
 class HomeActions(
     val onCycleTheme: () -> Unit,
-    val onNextSize: () -> Unit,
+    val onSettings: () -> Unit,
+    val onApps: () -> Unit,
+    val onMaint: () -> Unit,
     val onToggleStats: () -> Unit,
     val onComingSoon: (String) -> Unit,
     val onGauge: (String) -> Unit,
@@ -127,8 +129,8 @@ fun HomeScreen(state: HomeState, right: RightData, rightActions: RightActions, a
                         ) { actions.onCycleTheme() },
                     ),
                     right = listOf(
-                        DockItem(R.drawable.ic_apps, "Apps") { actions.onComingSoon("Apps") },
-                        DockItem(R.drawable.ic_settings, "Tamaño") { actions.onNextSize() },
+                        DockItem(R.drawable.ic_apps, "Apps", onClick = actions.onApps),
+                        DockItem(R.drawable.ic_settings, "Ajustes", onClick = actions.onSettings),
                     ),
                 )
             }
@@ -245,8 +247,11 @@ private fun CenterColumn(s: HomeState, compact: Boolean, veryCompact: Boolean, a
                         17, c.muted, tabular = true,
                         modifier = Modifier.weight(1f).clickable(onClick = actions.onOdometer),
                     )
-                    Txt("Ver todo", 17, c.accent, FontWeight.SemiBold,
-                        modifier = Modifier.clickable { actions.onComingSoon("Mantenimiento") }.padding(8.dp))
+                    Txt(
+                        if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 17,
+                        if (s.maintWarnings > 0) c.warn else c.accent, FontWeight.SemiBold,
+                        modifier = Modifier.clickable(onClick = actions.onMaint).padding(8.dp),
+                    )
                 }
                 val ring: Dp = if (veryCompact) 118.dp else 156.dp
                 Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

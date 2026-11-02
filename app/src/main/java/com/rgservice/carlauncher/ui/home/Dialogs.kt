@@ -70,10 +70,13 @@ sealed interface HomeDialog {
     data object Limit : HomeDialog
     data object TripReset : HomeDialog
     /** Elegir una app: para un botón de la barra, para agregar o reemplazar un acceso. */
-    data class PickApp(val title: String, val slot: Slot? = null, val replaceFav: String? = null) : HomeDialog
+    data class PickApp(val title: String, val slot: Slot? = null, val replaceFav: String? = null, val launch: Boolean = true) : HomeDialog
     data class FavMenu(val pkg: String) : HomeDialog
     data class Destination(val key: String, val name: String) : HomeDialog
     data class DestinationText(val key: String, val name: String) : HomeDialog
+    data class DateEdit(val id: String) : HomeDialog
+    data object AddItem : HomeDialog
+    data object MusicDiag : HomeDialog
 }
 
 @Composable
@@ -103,7 +106,7 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
                 LaunchedEffect(dialog) { open(HomeDialog.Odometer(then = dialog.id)) }
                 return
             }
-            val item = Maintenance.item(dialog.id)
+            val item = maint.item(dialog.id)
             val interval = maint.interval(dialog.id)
             val next = maint.next(dialog.id)
             val rem = maint.remaining(dialog.id)
@@ -136,11 +139,16 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
                         close()
                     }
                 }
-                Txt(
-                    "“Lo cambié hoy” deja el próximo en ${(odo + interval).fmtKm()} km",
-                    15, CarTheme.colors.muted, align = TextAlign.End,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                )
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (item.custom) {
+                        Txt("Eliminar ítem", 16, CarTheme.colors.warn, FontWeight.SemiBold,
+                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { maint.remove(item.id); close() }.padding(6.dp))
+                    }
+                    Txt(
+                        "“Lo cambié hoy” deja el próximo en ${(odo + interval).fmtKm()} km",
+                        15, CarTheme.colors.muted, align = TextAlign.End, modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
 
@@ -148,7 +156,7 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
             val back = { open(HomeDialog.GaugeEdit(dialog.id)) }
             NumberDialog(
                 title = "Próximo cambio",
-                help = "¿A cuántos km del tablero toca el próximo cambio de ${Maintenance.item(dialog.id).name.lowercase()}? " +
+                help = "¿A cuántos km del tablero toca el próximo cambio de ${maint.item(dialog.id).name.lowercase()}? " +
                     "Es el número del sticker del taller.",
                 initial = maint.next(dialog.id) ?: maint.odo()?.let { it + maint.interval(dialog.id) },
                 suffix = "km",
@@ -180,7 +188,7 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
 
         is HomeDialog.PickApp -> AppPicker(dialog.title, vm.apps, onDismiss = close) { pkg ->
             when {
-                dialog.slot != null -> { vm.apps.setSlot(dialog.slot, pkg); vm.apps.launch(pkg) }
+                dialog.slot != null -> { vm.apps.setSlot(dialog.slot, pkg); if (dialog.launch) vm.apps.launch(pkg) }
                 dialog.replaceFav != null -> vm.apps.replaceFav(dialog.replaceFav, pkg)
                 else -> vm.apps.addFav(pkg)
             }
@@ -226,6 +234,26 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
             onDismiss = close,
             onSave = { vm.apps.setDest(dialog.key, it); close() },
         )
+
+        is HomeDialog.DateEdit -> {
+            val d = maint.dateItem(dialog.id)
+            DateDialog(
+                title = d.name,
+                initial = maint.date(dialog.id),
+                canDelete = d.custom,
+                onDismiss = close,
+                onSave = { maint.setDate(dialog.id, it); close() },
+                onClear = { maint.setDate(dialog.id, null); close() },
+                onDelete = { maint.remove(dialog.id); close() },
+            )
+        }
+
+        HomeDialog.AddItem -> AddItemDialog(onDismiss = close) { name, interval ->
+            if (interval == null) open(HomeDialog.DateEdit(maint.addDate(name)))
+            else { maint.addKm(name, interval); close() }
+        }
+
+        HomeDialog.MusicDiag -> MusicDiagDialog(vm, onDismiss = close)
 
         HomeDialog.TripReset -> CarDialog("Viaje", onDismiss = close) {
             Txt(
@@ -386,5 +414,131 @@ private fun AppPicker(title: String, apps: AppsRepository, onDismiss: () -> Unit
         }
         Spacer(Modifier.height(14.dp))
         DialogButton("Cancelar", primary = false, Modifier.fillMaxWidth(), onClick = onDismiss)
+    }
+}
+
+/** Fecha con botones grandes (+ / −) por día, mes y año: cómodo en la pantalla del auto. */
+@Composable
+private fun DateDialog(
+    title: String,
+    initial: Long?,
+    canDelete: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (Long) -> Unit,
+    onClear: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val c = CarTheme.colors
+    var ms by remember {
+        mutableStateOf(initial ?: java.util.Calendar.getInstance().apply { add(java.util.Calendar.YEAR, 1) }.timeInMillis)
+    }
+    val cal = java.util.Calendar.getInstance().apply { timeInMillis = ms }
+    fun shift(field: Int, by: Int) {
+        ms = java.util.Calendar.getInstance().apply { timeInMillis = ms; add(field, by) }.timeInMillis
+    }
+    val months = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+    CarDialog(title, onDismiss) {
+        Txt("Fecha de vencimiento", 17, c.muted, modifier = Modifier.padding(bottom = 12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Stepper("Día", cal.get(java.util.Calendar.DAY_OF_MONTH).toString(), Modifier.weight(1f)) { shift(java.util.Calendar.DAY_OF_MONTH, it) }
+            Stepper("Mes", months[cal.get(java.util.Calendar.MONTH)], Modifier.weight(1f)) { shift(java.util.Calendar.MONTH, it) }
+            Stepper("Año", cal.get(java.util.Calendar.YEAR).toString(), Modifier.weight(1.2f)) { shift(java.util.Calendar.YEAR, it) }
+        }
+        val days = Maintenance.daysUntil(ms)
+        Txt(Maintenance.leftText(days).replaceFirstChar { it.uppercase() }, 18,
+            if (days <= Maintenance.WARN_DAYS) c.warn else c.accent, FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 12.dp))
+        Spacer(Modifier.height(18.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            when {
+                canDelete -> DialogButton("Eliminar ítem", primary = false, Modifier.weight(1f), onClick = onDelete)
+                initial != null -> DialogButton("Quitar fecha", primary = false, Modifier.weight(1f), onClick = onClear)
+                else -> DialogButton("Cancelar", primary = false, Modifier.weight(1f), onClick = onDismiss)
+            }
+            DialogButton("Guardar", primary = true, Modifier.weight(1f)) { onSave(ms) }
+        }
+    }
+}
+
+@Composable
+private fun Stepper(label: String, value: String, modifier: Modifier, onStep: (Int) -> Unit) {
+    val c = CarTheme.colors
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Txt(label, 15, c.muted)
+        StepButton("+") { onStep(1) }
+        Txt(value, 30, weight = FontWeight.SemiBold, tabular = true, modifier = Modifier.padding(vertical = 6.dp))
+        StepButton("−") { onStep(-1) }
+    }
+}
+
+@Composable
+private fun StepButton(t: String, onClick: () -> Unit) {
+    val c = CarTheme.colors
+    val shape = RoundedCornerShape(16.dp)
+    Box(
+        Modifier.padding(top = 6.dp).fillMaxWidth().height(50.dp).clip(shape).background(c.card2)
+            .border(1.dp, c.line, shape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Txt(t, 26, c.accent, FontWeight.SemiBold) }
+}
+
+/** Agregar un ítem propio: por km (con intervalo) o por fecha (interval = null). */
+@Composable
+private fun AddItemDialog(onDismiss: () -> Unit, onAdd: (name: String, interval: Int?) -> Unit) {
+    val c = CarTheme.colors
+    var v by remember { mutableStateOf(TextFieldValue("")) }
+    var byKm by remember { mutableStateOf(true) }
+    var interval by remember { mutableStateOf(10000) }
+    CarDialog("Agregar al mantenimiento", onDismiss) {
+        Txt("Nombre (ej.: Filtro de combustible, Patente)", 16, c.muted, modifier = Modifier.padding(bottom = 8.dp))
+        Field(v, { nv -> v = nv.copy(text = nv.text.take(28)) }, KeyboardType.Text, null, onDone = {})
+        Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Chip("Por kilómetros", byKm, Modifier.weight(1f)) { byKm = true }
+            Chip("Vencimiento (fecha)", !byKm, Modifier.weight(1f)) { byKm = false }
+        }
+        if (byKm) {
+            Txt("Se cambia cada", 16, c.muted, modifier = Modifier.padding(top = 14.dp, bottom = 8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(5000, 10000, 20000, 40000).forEach { p ->
+                    Chip("${p.fmtKm()} km", p == interval, Modifier.weight(1f)) { interval = p }
+                }
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DialogButton("Cancelar", primary = false, Modifier.weight(1f), onClick = onDismiss)
+            DialogButton(if (byKm) "Agregar" else "Elegir fecha", primary = true, Modifier.weight(1f)) {
+                val name = v.text.trim()
+                if (name.isNotEmpty()) onAdd(name, if (byKm) interval else null)
+            }
+        }
+    }
+}
+
+/** Diagnóstico de música: qué apps ve, por dónde manda los botones y prueba en vivo. */
+@Composable
+private fun MusicDiagDialog(vm: HomeViewModel, onDismiss: () -> Unit) {
+    val c = CarTheme.colors
+    val music = vm.music
+    var lines by remember { mutableStateOf(music.diagnostics()) }
+    var mode by remember { mutableStateOf(music.mode) }
+    LaunchedEffect(Unit) { while (true) { delay(1000); lines = music.diagnostics() } }
+    CarDialog("Diagnóstico de música", onDismiss) {
+        Column(Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(14.dp)).background(c.card2).padding(12.dp)) {
+            lines.forEach { Txt(it, 15, c.text, maxLines = 2, modifier = Modifier.padding(bottom = 4.dp)) }
+        }
+        Txt("Cómo mandar los botones", 16, c.muted, modifier = Modifier.padding(top = 14.dp, bottom = 8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Automático", "Tecla del sistema", "Directo a app Música").forEachIndexed { i, t ->
+                Chip(t, mode == i, Modifier.weight(1f)) { music.mode = i; mode = i }
+            }
+        }
+        Txt("Probá con música sonando:", 16, c.muted, modifier = Modifier.padding(top = 14.dp, bottom = 8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DialogButton("⏮", primary = false, Modifier.weight(1f)) { music.previous(); lines = music.diagnostics() }
+            DialogButton("⏯", primary = true, Modifier.weight(1f)) { music.playPause(); lines = music.diagnostics() }
+            DialogButton("⏭", primary = false, Modifier.weight(1f)) { music.next(); lines = music.diagnostics() }
+            DialogButton("Cerrar", primary = false, Modifier.weight(1.2f), onClick = onDismiss)
+        }
     }
 }

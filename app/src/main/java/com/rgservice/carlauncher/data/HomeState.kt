@@ -11,6 +11,7 @@ data class HomeState(
     val odoKm: Int? = null,             // km del tablero (null = sin cargar)
     val oil: Gauge = Gauge("oil", "Aceite motor", -1, 5000, null),
     val gear: Gauge = Gauge("gear", "Aceite caja", -1, 40000, null),
+    val maintWarnings: Int = 0,         // ítems de mantenimiento en alerta (km o fecha)
     val dark: Boolean = true,
     val theme: ThemeMode = ThemeMode.Auto,
 ) {

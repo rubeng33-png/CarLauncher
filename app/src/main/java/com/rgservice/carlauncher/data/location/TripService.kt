@@ -36,6 +36,27 @@ class TripService : Service(), LocationListener {
         /** 20 min sin moverse = el próximo movimiento empieza un viaje nuevo. */
         const val NEW_TRIP_AFTER_MS = 20 * 60 * 1000L
 
+        private var lastOpen = 0L
+
+        /**
+         * Al dar contacto trae el launcher al frente (opción "Abrir al dar contacto").
+         * Lo permite Android 10 porque el servicio de notificaciones está activo o porque
+         * se dio el permiso "Mostrar sobre otras apps".
+         */
+        fun openLauncher(c: Context) {
+            if (!Prefs.of(c).getBoolean("ignOpen", true)) return
+            val now = System.currentTimeMillis()
+            if (now - lastOpen < 10_000) return
+            lastOpen = now
+            try {
+                val i = c.packageManager.getLaunchIntentForPackage(c.packageName) ?: return
+                c.startActivity(
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        .putExtra("ign", true),
+                )
+            } catch (e: Exception) { }
+        }
+
         fun start(c: Context) {
             if (c.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
             try { c.startForegroundService(Intent(c, TripService::class.java)) } catch (e: Exception) { }
@@ -58,7 +79,13 @@ class TripService : Service(), LocationListener {
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     wakeTask?.let { h.removeCallbacks(it) }
-                    val r = Runnable { startGps() }
+                    // Espera 3 s a que la radio termine de despertar antes de usar GPS o abrir algo
+                    val r = Runnable {
+                        if ((getSystemService(Context.POWER_SERVICE) as PowerManager).isInteractive) {
+                            startGps()
+                            openLauncher(c)
+                        }
+                    }
                     wakeTask = r
                     h.postDelayed(r, 3000)
                 }
@@ -164,7 +191,7 @@ class TripService : Service(), LocationListener {
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
 }
 
-/** Al prender la radio arranca el GPS (sin abrir nada todavía; eso es de la etapa 5). */
+/** Al prender la radio arranca el GPS (el launcher se abre solo por ser la pantalla de inicio). */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, i: Intent) {
         if (i.action == Intent.ACTION_BOOT_COMPLETED) TripService.start(c)

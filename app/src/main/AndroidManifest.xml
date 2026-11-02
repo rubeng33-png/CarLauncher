@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Opcional: asegura que pueda abrirse solo al dar contacto -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Para listar las apps instaladas (Accesos y botones de la barra) -->
     <queries>
@@ -16,11 +18,12 @@
     </queries>
 
     <application
+        android:name=".CarApp"
         android:label="Car Launcher 3"
         android:icon="@android:drawable/sym_def_app_icon"
         android:theme="@style/Theme.CarLauncher">
 
-        <!-- Etapas 1-4: todavía se abre como app normal (reemplazar el inicio es la etapa 5). -->
+        <!-- Pantalla de inicio (HOME) de la radio y también ícono en el cajón de apps. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,6 +33,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

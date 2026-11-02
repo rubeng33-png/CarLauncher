@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.rgservice.carlauncher.data.location.GpsFix
 import com.rgservice.carlauncher.data.location.LiveGps
 import com.rgservice.carlauncher.data.location.TripService
+import com.rgservice.carlauncher.data.maint.MaintSnapshot
 import com.rgservice.carlauncher.data.maint.Maintenance
 import com.rgservice.carlauncher.data.weather.WeatherRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -57,10 +58,15 @@ class CarRepository(private val sp: SharedPreferences) {
             odoKm = maint.odo(),
             oil = maint.gauge("oil"),
             gear = maint.gauge("gear"),
+            maintWarnings = maint.snapshot().warnings,
             dark = isDark(mode, now),
             theme = mode,
         )
     }
+
+    /** Mantenimiento completo; se recalcula cuando cambia algo guardado (y cada minuto por las fechas). */
+    fun maintenance(): Flow<MaintSnapshot> =
+        combine(prefChanges(), flow { while (true) { emit(Unit); delay(60_000) } }) { _, _ -> maint.snapshot() }
 
     private fun trip(): Trip {
         val km = sp.getFloat("tripM", 0f) / 1000.0
