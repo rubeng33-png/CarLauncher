@@ -47,6 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -217,10 +220,15 @@ private fun CarStage() {
     val c = CarTheme.colors
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val w = minOf(maxWidth, maxHeight * (316f / 178f))
-        // Luz del piso
+        // Luz del piso: un óvalo achatado debajo de las ruedas
+        val floor = c.accent.copy(alpha = if (c.isDark) 0.34f else 0.18f)
         Box(
-            Modifier.align(Alignment.Center).padding(top = w * 0.42f).width(w).height(w * 0.22f)
-                .background(Brush.radialGradient(listOf(c.accent.copy(alpha = if (c.isDark) 0.30f else 0.16f), Color.Transparent))),
+            Modifier.align(Alignment.Center).offset(y = w * 0.21f).width(w).height(w * 0.14f)
+                .drawBehind {
+                    scale(1f, size.height / size.width) {
+                        drawCircle(Brush.radialGradient(listOf(floor, Color.Transparent), center, size.width / 2f), size.width / 2f, center)
+                    }
+                },
         )
         CarPicture(Modifier.width(w).aspectRatio(316f / 178f))
     }
@@ -255,14 +263,7 @@ private fun MaintPanel(s: HomeState, actions: HomeActions, compact: Boolean, mod
         modifier.clip(RoundedCornerShape(22.dp)).background(tileBg()).border(1.dp, c.line, RoundedCornerShape(22.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Txt("Mantenimiento", 15, c.muted, FontWeight.Medium, modifier = Modifier.weight(1f))
-            Txt(
-                if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 15,
-                if (s.maintWarnings > 0) c.warn else c.accent, FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = actions.onMaint).padding(vertical = 6.dp, horizontal = 2.dp),
-            )
-        }
+        Txt("Mantenimiento", 15, c.muted, FontWeight.Medium, modifier = Modifier.padding(top = 4.dp))
         Txt(
             if (s.odoKm != null) "Tablero ${s.odoKm.fmtKm()} km" else "Cargar km del tablero", 14,
             if (s.odoKm != null) c.muted else c.accent, tabular = true,
@@ -272,6 +273,14 @@ private fun MaintPanel(s: HomeState, actions: HomeActions, compact: Boolean, mod
             MaintRow(s.oil, if (compact) 78.dp else 92.dp) { actions.onGauge(s.oil.id) }
             Hairline(Modifier.fillMaxWidth().height(1.dp))
             MaintRow(s.gear, if (compact) 78.dp else 92.dp) { actions.onGauge(s.gear.id) }
+        }
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = actions.onMaint).padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val col = if (s.maintWarnings > 0) c.warn else c.accent
+            Txt(if (s.maintWarnings > 0) "Ver todo · ${s.maintWarnings} ⚠" else "Ver todo", 15, col, FontWeight.SemiBold)
+            LineIcon(R.drawable.ic_chevron, 16.dp, col, Modifier.padding(start = 2.dp))
         }
     }
 }
