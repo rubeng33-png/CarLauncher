@@ -23,6 +23,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +60,7 @@ import com.rgservice.carlauncher.ui.components.fmtKm
 import com.rgservice.carlauncher.ui.theme.Barlow
 import com.rgservice.carlauncher.ui.theme.CarTheme
 import kotlinx.coroutines.delay
+import com.rgservice.carlauncher.data.CarPhoto
 
 /** Ventanas que se abren desde el inicio. */
 sealed interface HomeDialog {
@@ -77,10 +79,15 @@ sealed interface HomeDialog {
     data class DateEdit(val id: String) : HomeDialog
     data object AddItem : HomeDialog
     data object MusicDiag : HomeDialog
+    data object CarImage : HomeDialog
 }
 
 @Composable
-fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (HomeDialog?) -> Unit) {
+fun HomeDialogs(
+    dialog: HomeDialog?, s: HomeState, vm: HomeViewModel,
+    onPickPhoto: () -> Unit = {}, onClearPhoto: () -> Unit = {},
+    open: (HomeDialog?) -> Unit,
+) {
     val maint = vm.repo.maint
     val close = { open(null) }
     when (dialog) {
@@ -193,6 +200,27 @@ fun HomeDialogs(dialog: HomeDialog?, s: HomeState, vm: HomeViewModel, open: (Hom
                 else -> vm.apps.addFav(pkg)
             }
             close()
+        }
+
+        is HomeDialog.CarImage -> {
+            val hasPhoto = CarPhoto.photo.collectAsState().value != null
+            CarDialog("Imagen del auto", onDismiss = close) {
+                Txt(
+                    if (hasPhoto) "Ahora: tu foto (se ve de día y de noche)."
+                    else "Ahora: modelo 3D (holograma en modo noche). Elegí una foto de tu auto de la galería.",
+                    18, CarTheme.colors.muted, maxLines = 3, modifier = Modifier.padding(bottom = 18.dp),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DialogButton(if (hasPhoto) "Volver al modelo 3D" else "Cerrar", primary = false, Modifier.weight(1f)) {
+                        if (hasPhoto) onClearPhoto()
+                        close()
+                    }
+                    DialogButton(if (hasPhoto) "Cambiar foto" else "Elegir de la galería", primary = true, Modifier.weight(1.2f)) {
+                        close()
+                        onPickPhoto()
+                    }
+                }
+            }
         }
 
         is HomeDialog.FavMenu -> CarDialog(vm.apps.label(dialog.pkg), onDismiss = close) {

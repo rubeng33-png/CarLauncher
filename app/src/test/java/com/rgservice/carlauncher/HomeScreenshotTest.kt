@@ -1,6 +1,8 @@
 package com.rgservice.carlauncher
 
 import android.content.Context
+import android.graphics.BitmapFactory
+import com.rgservice.carlauncher.data.CarPhoto
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -61,8 +63,9 @@ class HomeScreenshotTest {
         playing = true, positionMs = 12_000, positionAt = 0, durationMs = 239_000, hasSession = true,
     )
 
-    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0) {
+    private fun shot(name: String, dark: Boolean, size: UiSize, page: Int = 0, photo: Boolean = false) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
+        CarPhoto.setForTest(if (photo) BitmapFactory.decodeResource(ctx.resources, R.drawable.auto3d) else null)
         val apps = AppsRepository(ctx, ctx.getSharedPreferences("test", Context.MODE_PRIVATE))
         val home = HomeActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         val right = RightActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {})
@@ -87,4 +90,5 @@ class HomeScreenshotTest {
     @Test fun claroGrande() = shot("4-claro-grande", false, UiSize.Grande)
     @Test fun oscuroMuyGrande() = shot("5-oscuro-muy-grande", true, UiSize.MuyGrande)
     @Test fun oscuroAccesos() = shot("6-oscuro-accesos", true, UiSize.Normal, page = 2)
+    @Test fun oscuroConFoto() = shot("7-oscuro-con-foto", true, UiSize.Normal, photo = true)
 }

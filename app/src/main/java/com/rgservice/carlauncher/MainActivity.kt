@@ -1,5 +1,8 @@
 package com.rgservice.carlauncher
 
+import com.rgservice.carlauncher.data.CarPhoto
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -65,6 +68,17 @@ class MainActivity : ComponentActivity() {
     /** Sube al volver a la app: refresca los estados de permisos en Ajustes. */
     private val resumeTick = mutableIntStateOf(0)
 
+    /** Elegir la foto del auto de la galería (no necesita permisos). */
+    private val pickPhoto = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) lifecycleScope.launch {
+            toast(if (CarPhoto.save(this@MainActivity, uri)) "Listo: foto del auto guardada" else "No se pudo usar esa imagen")
+        }
+    }
+
+    private fun openGallery() {
+        try { pickPhoto.launch("image/*") } catch (e: Exception) { toast("No hay galería para elegir la foto") }
+    }
+
     private val askLocation = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) TripService.start(this)
         else toast("Sin permiso de ubicación no se puede medir velocidad ni km")
@@ -78,6 +92,7 @@ class MainActivity : ComponentActivity() {
             toast("Car Launcher falló varias veces. Podés elegir otra pantalla de inicio.")
             openHomeSettings()
         }
+        lifecycleScope.launch { CarPhoto.load(this@MainActivity) }
         welcomePref.value = vm.welcomeOn
         ignPref.value = vm.ignitionOpen
         welcome.value = savedInstanceState == null && vm.welcomeOn
@@ -106,6 +121,7 @@ class MainActivity : ComponentActivity() {
             onBluetooth = {
                 if (!vm.apps.start(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) toast("No se pudo abrir Bluetooth")
             },
+            onCarImage = { dialog.value = HomeDialog.CarImage },
         )
 
         val rightActions = RightActions(
@@ -181,6 +197,7 @@ class MainActivity : ComponentActivity() {
                 vm.apps.start(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             },
             onPreviewWelcome = { screen.value = Screen.Home; welcome.value = true },
+            onCarImage = { dialog.value = HomeDialog.CarImage },
         )
 
         val initialPage = vm.initialPage
@@ -234,6 +251,7 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Screen.Settings -> {
                                     val slots by vm.apps.slots.collectAsStateWithLifecycle()
+                                    val carPhoto by CarPhoto.photo.collectAsStateWithLifecycle()
                                     val media by vm.media.collectAsStateWithLifecycle()
                                     val tick by resumeTick
                                     SettingsScreen(
@@ -247,6 +265,7 @@ class MainActivity : ComponentActivity() {
                                             ignitionOpen = ignPref.value,
                                             isHome = remember(tick) { isDefaultHome() },
                                             overlayOk = remember(tick) { Settings.canDrawOverlays(this@MainActivity) },
+                                            carPhoto = carPhoto != null,
                                         ),
                                         settingsActions,
                                     )
@@ -259,7 +278,11 @@ class MainActivity : ComponentActivity() {
                         }
                         if (stats) PerfMeter(Modifier.align(Alignment.TopCenter).padding(top = 4.dp), onClick = vm::toggleStats)
                     }
-                    HomeDialogs(open, state, vm) { dialog.value = it }
+                    HomeDialogs(
+                        open, state, vm,
+                        onPickPhoto = ::openGallery,
+                        onClearPhoto = { lifecycleScope.launch { CarPhoto.clear(this@MainActivity) } },
+                    ) { dialog.value = it }
                 }
             }
         }

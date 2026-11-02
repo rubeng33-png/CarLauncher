@@ -5,7 +5,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rgservice.carlauncher.data.CarPhoto
 import com.rgservice.carlauncher.data.Gauge
+import androidx.compose.ui.graphics.asImageBitmap
 import com.rgservice.carlauncher.ui.components.ArcGauge
 import com.rgservice.carlauncher.ui.components.cardBrush
 import com.rgservice.carlauncher.ui.theme.TileTint
@@ -100,6 +102,7 @@ class HomeActions(
     val onSlot: (Slot) -> Unit,
     val onSlotLong: (Slot) -> Unit,
     val onBluetooth: () -> Unit,
+    val onCarImage: () -> Unit = {},
 )
 
 /**
@@ -149,6 +152,8 @@ private fun HeroCard(s: HomeState, actions: HomeActions, compact: Boolean, veryC
                 if (!veryCompact) {
                     Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                         CarStage()
+                        // Mantener apretado el auto: elegir la imagen (foto de la galería o modelo 3D)
+                        Box(Modifier.matchParentSize().pointerInput(Unit) { detectTapGestures(onLongPress = { actions.onCarImage() }) })
                     }
                     Spacer(Modifier.width(14.dp))
                 }
@@ -234,11 +239,22 @@ private fun CarStage() {
     }
 }
 
-/** En tema oscuro: holograma en video (lo decodifica el hardware). En tema claro: imagen fija. */
+/**
+ * Imagen del auto: con foto propia se muestra la foto (de día y de noche).
+ * Sin foto: holograma en video en tema oscuro (lo decodifica el hardware) e imagen fija en tema claro.
+ */
 @Composable
 private fun CarPicture(modifier: Modifier) {
     val c = CarTheme.colors
-    if (c.isDark) {
+    val photo by CarPhoto.photo.collectAsStateWithLifecycle()
+    val bmp = photo
+    if (bmp != null) {
+        val img = remember(bmp) { bmp.asImageBitmap() }
+        Image(
+            img, contentDescription = "Tu auto", contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(20.dp)),
+        )
+    } else if (c.isDark) {
         AndroidView(
             factory = { ctx -> HoloVideoView(ctx).apply { play(0, R.raw.holo_home) } },
             modifier = modifier,

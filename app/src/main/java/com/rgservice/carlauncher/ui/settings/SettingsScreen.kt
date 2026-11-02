@@ -53,6 +53,7 @@ class SettingsData(
     val isHome: Boolean,
     val overlayOk: Boolean,
     val version: String,
+    val carPhoto: Boolean = false,
 )
 
 class SettingsActions(
@@ -74,6 +75,7 @@ class SettingsActions(
     val onOverlay: () -> Unit,
     val onPreviewWelcome: () -> Unit,
     val onAndroidSettings: () -> Unit,
+    val onCarImage: () -> Unit = {},
 )
 
 @Composable
@@ -111,6 +113,8 @@ fun SettingsScreen(d: SettingsData, a: SettingsActions) {
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Group("Auto") {
+                    Item("Imagen del auto", if (d.carPhoto) "Foto propia" else "Modelo 3D", onClick = a.onCarImage)
+                    Line()
                     Item("Km del tablero", d.odo?.let { "${it.fmtKm()} km" } ?: "Sin cargar", onClick = a.onOdometer)
                     Line()
                     Item("Viaje", "Poner en cero", onClick = a.onTrip)

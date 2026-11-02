@@ -1,9 +1,16 @@
-CAR LAUNCHER 3 – versión 3.0-etapa5 (Kotlin + Jetpack Compose)
+CAR LAUNCHER 3 – versión 3.0-etapa5.1 (Kotlin + Jetpack Compose)
 ================================================================
 
 Launcher (pantalla de inicio) para la radio Android del auto: velocidad y viaje por GPS,
 clima, mantenimiento por km del tablero con visor holográfico, música, mapa, accesos a apps
 y ajustes. Diseño minimalista oscuro/claro pensado para una pantalla de 7" (1024x600).
+
+NOVEDADES 3.0-etapa5.1
+- Nuevo diseño del inicio (tarjeta grande con la hora, el auto, la velocidad y el viaje;
+  columna derecha con Mapas, accesos rápidos, Todas las apps, Ajustes y Música/Mapa/Accesos).
+- Imagen del auto: mantener apretado el auto en el inicio, o Ajustes › Auto › "Imagen del auto".
+  "Elegir de la galería" usa una foto tuya, que se ve de día y de noche (en lugar del
+  holograma). "Volver al modelo 3D" deja el holograma de noche y el modelo 3D de día.
 
 Este archivo sirve para quien compile y pruebe. Al final hay una sección para el asistente
 (Claude u otro) que ayude a compilar, corregir y guiar las pruebas.
